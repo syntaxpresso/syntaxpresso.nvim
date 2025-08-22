@@ -10,10 +10,11 @@ local M = {}
 ---@field renamedNodes integer
 ---@field newName string
 
----@class GetTextResponse
+---@class GetInfoResponse
 ---@field filePath string
 ---@field node string
----@field text string
+---@field nodeText string
+---@field nodeType string
 
 ---@class GetMainClassResponse
 ---@field filePath string
