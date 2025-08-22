@@ -20,7 +20,8 @@ function M.get_executable_path()
   if vim.fn.has("win32") == 1 then
     executable_name = "syntaxpresso.exe"
   end
-  return install_dir .. "/" .. executable_name
+  return "/var/home/andreluis/Documents/projects/syntaxpresso/core/build/native/nativeCompile/core"
+  -- return install_dir .. "/" .. executable_name
 end
 
 -- Determines the correct asset name based on the user's OS and architecture.

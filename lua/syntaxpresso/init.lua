@@ -5,9 +5,17 @@ local commands = require("syntaxpresso.commands")
 
 local M = {}
 
+-- Track if setup has already been called
+local setup_called = false
+
 -- This is the main setup function called when the plugin loads.
 function M.setup()
-  local executable_path = installer.get_executable_path()
+  if setup_called then
+    return
+  end
+  setup_called = true
+  local executable_path =
+  "/var/home/andreluis/Documents/projects/syntaxpresso/core/build/native/nativeCompile/core"                         --installer.get_executable_path()
 
   -- Check if the executable binary already exists.
   if vim.fn.filereadable(executable_path) == 1 then
