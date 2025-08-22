@@ -15,7 +15,7 @@ function M.setup()
   end
   setup_called = true
   local executable_path =
-  "/var/home/andreluis/Documents/projects/syntaxpresso/core/build/native/nativeCompile/core"                         --installer.get_executable_path()
+  "/var/home/andreluis/Documents/projects/syntaxpresso/core/build/native/nativeCompile/core" --installer.get_executable_path()
 
   -- Check if the executable binary already exists.
   if vim.fn.filereadable(executable_path) == 1 then

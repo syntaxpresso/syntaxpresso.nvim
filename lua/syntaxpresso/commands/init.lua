@@ -15,4 +15,3 @@ function M.register(java_executable)
 end
 
 return M
-
