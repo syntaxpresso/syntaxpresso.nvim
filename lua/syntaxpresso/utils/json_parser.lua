@@ -12,6 +12,7 @@ local M = {}
 
 ---@class GetInfoResponse
 ---@field filePath string
+---@field language string
 ---@field node string
 ---@field nodeText string
 ---@field nodeType string

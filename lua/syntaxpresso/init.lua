@@ -9,12 +9,20 @@ local M = {}
 local setup_called = false
 
 -- This is the main setup function called when the plugin loads.
-function M.setup()
+function M.setup(opts)
   if setup_called then
     return
   end
   setup_called = true
-  local executable_path = installer.get_executable_path()
+  
+  opts = opts or {}
+  
+  local executable_path
+  if opts.executable_path then
+    executable_path = opts.executable_path
+  else
+    executable_path = installer.get_executable_path()
+  end
 
   -- Check if the executable binary already exists.
   if vim.fn.filereadable(executable_path) == 1 then
@@ -57,6 +65,23 @@ function M.setup()
   end, {
     desc = "Checks for and installs updates to the syntaxpresso core binary.",
   })
+
+  -- Setup conditional rename keymap if enabled (default: true)
+  if opts.setup_keymap ~= false then
+    vim.keymap.set("n", "<leader>cr", function()
+      -- Use the same executable_path logic as setup
+      local current_executable_path
+      if opts.executable_path then
+        current_executable_path = opts.executable_path
+      else
+        current_executable_path = installer.get_executable_path()
+      end
+      require("syntaxpresso.commands.rename").conditional_rename(current_executable_path)
+    end, {
+      desc = "Rename (syntaxpresso/inc-rename)",
+      silent = true,
+    })
+  end
 end
 
 return M

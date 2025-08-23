@@ -8,11 +8,12 @@ local function execute_get_info(java_executable)
       local info_lines = {
         "Node Info:",
         "  File: " .. response_data.filePath,
+        "  Language: " .. response_data.language,
         "  Node: " .. response_data.node,
         "  Type: " .. response_data.nodeType,
         "  Text: " .. response_data.nodeText
       }
-      
+
       vim.notify(table.concat(info_lines, "\n"), vim.log.levels.INFO)
     else
       vim.notify("Failed to get node info", vim.log.levels.WARN)

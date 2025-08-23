@@ -1,11 +1,13 @@
 local json_parser = require("syntaxpresso.utils.json_parser")
 local get_info_util = require("syntaxpresso.utils.get_info")
+local installer = require("syntaxpresso.installer")
 
 local M = {}
 
 local function get_current_word(java_executable, callback)
   get_info_util.get_node_info(java_executable, function(response_data)
     if response_data and response_data.nodeText then
+      vim.notify(vim.inspect(response_data), vim.log.levels.INFO)
       local clean_text = response_data.nodeText:gsub("[\r\n]", "")
       callback(clean_text)
     else
@@ -72,6 +74,41 @@ local function execute_rename(java_executable, new_name)
       end
     end,
   })
+end
+
+---Fallback to inc-rename or LSP rename
+local function fallback_rename()
+  local ok, inc_rename = pcall(require, "inc_rename")
+  if ok then
+    local cmd = ":" .. inc_rename.config.cmd_name .. " " .. vim.fn.expand("<cword>")
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(cmd, true, false, true), "n", false)
+  else
+    vim.lsp.buf.rename()
+  end
+end
+
+
+function M.conditional_rename(java_executable)
+  if vim.fn.filereadable(java_executable) == 1 then
+    get_info_util.get_node_info(java_executable, function(response_data)
+      if response_data and (response_data.nodeType == "CLASS_NAME" or response_data.nodeType == "METHOD_NAME") then
+        get_current_word(java_executable, function(current_word)
+          vim.ui.input({
+            prompt = "Enter new name: ",
+            default = current_word,
+          }, function(new_name)
+            if new_name and new_name ~= "" then
+              execute_rename(java_executable, new_name)
+            end
+          end)
+        end)
+      else
+        fallback_rename()
+      end
+    end)
+  else
+    fallback_rename()
+  end
 end
 
 function M.register(java_executable)
