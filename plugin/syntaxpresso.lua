@@ -1,6 +1,3 @@
 -- plugin/syntaxpresso.lua
--- This is the entry point for your plugin.
-
--- The require statement below will execute the init.lua file
--- in your lua/syntaxpresso/ directory.
-require("syntaxpresso").setup()
+-- This file is intentionally empty to prevent auto-loading.
+-- Setup should be called explicitly by the user or plugin manager.
