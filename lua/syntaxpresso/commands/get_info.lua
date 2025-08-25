@@ -1,31 +1,67 @@
-local get_info_util = require("syntaxpresso.utils.get_info")
+local json_parser = require("syntaxpresso.utils.json_parser")
 
 local M = {}
 
-local function execute_get_info(java_executable)
-  get_info_util.get_node_info(java_executable, function(response_data)
-    if response_data then
-      local info_lines = {
-        "Node Info:",
-        "  File: " .. response_data.filePath,
-        "  Language: " .. response_data.language,
-        "  Node: " .. response_data.node,
-        "  Type: " .. response_data.nodeType,
-        "  Text: " .. response_data.nodeText
-      }
+function M.execute_get_info(java_executable)
+  local file_path = vim.fn.expand("%:p")
+  local pos = vim.api.nvim_win_get_cursor(0)
 
-      vim.notify(table.concat(info_lines, "\n"), vim.log.levels.INFO)
-    else
-      vim.notify("Failed to get node info", vim.log.levels.WARN)
-    end
-  end)
-end
+  local cmd_parts = {
+    java_executable,
+    "get-info",
+    "--file-path=" .. file_path,
+    "--language=JAVA",
+    "--ide=NEOVIM",
+    "--line=" .. pos[1],
+    "--column=" .. pos[2]
+  }
 
-function M.register(java_executable)
-  vim.api.nvim_create_user_command("GetInfo", function()
-    execute_get_info(java_executable)
-  end, {
-    desc = "Get information about the current node under cursor",
+  local output = {}
+  vim.fn.jobstart(cmd_parts, {
+    on_stdout = function(_, data)
+      if data and #data > 0 then
+        for _, line in ipairs(data) do
+          if line ~= "" then
+            table.insert(output, line)
+          end
+        end
+      end
+    end,
+    on_stderr = function(_, data)
+      if data and #data > 0 and data[1] ~= "" then
+        vim.notify("Error getting node info: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+      end
+    end,
+    on_exit = function(_, exit_code)
+      if exit_code == 0 and #output > 0 then
+        local raw_output = table.concat(output, "")
+        local ok, result = json_parser.parse_response(raw_output)
+
+        if ok and type(result) == "table" and result.succeed and result.data then
+          ---@cast result DataTransferObject
+          ---@type GetInfoResponse
+          local response_data = result.data
+          
+          local info_lines = {
+            "Node Info:",
+            "  File: " .. response_data.filePath,
+            "  Language: " .. response_data.language,
+            "  Node: " .. response_data.node,
+            "  Type: " .. response_data.nodeType,
+            "  Text: " .. response_data.nodeText
+          }
+
+          vim.notify(table.concat(info_lines, "\n"), vim.log.levels.INFO)
+        else
+          vim.notify("Failed to parse get-info response. Raw output: " .. raw_output, vim.log.levels.WARN)
+          if ok and type(result) == "table" and result.errorReason then
+            vim.notify("Error: " .. result.errorReason, vim.log.levels.ERROR)
+          end
+        end
+      else
+        vim.notify("Get info command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
+      end
+    end,
   })
 end
 
