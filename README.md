@@ -12,4 +12,4 @@ return {
     'MunifTanjim/nui.nvim',
   }
 }
-`` 
+```
