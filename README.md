@@ -11,6 +11,5 @@ return {
     'grapp-dev/nui-components.nvim',
     'MunifTanjim/nui.nvim',
   }
-
 }
 `` 
