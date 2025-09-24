@@ -2,12 +2,37 @@ local json_parser = require("syntaxpresso.utils.json_parser")
 
 local M = {}
 
-function M.execute_create_jpa_repository(java_executable)
+local function GetJdtlsClassContent(uri)
+  local original_win = vim.api.nvim_get_current_win()
+  require('jdtls').open_classfile(uri)
+  local new_buf = vim.api.nvim_get_current_buf()
+  local content = vim.api.nvim_buf_get_lines(new_buf, 0, -1, false)
+  vim.cmd('bdelete! ' .. new_buf)
+  vim.api.nvim_set_current_win(original_win)
+  return content
+end
+
+local function get_symbol_uri(symbol_name, callback)
+  vim.lsp.buf_request(0, 'workspace/symbol', { query = symbol_name }, function(err, result)
+    if err or not result or vim.tbl_isempty(result) then
+      callback(nil, "No symbols found for: " .. symbol_name)
+      return
+    end
+    local uri = result[1].location.uri
+    callback(uri, nil)
+  end)
+end
+
+local function execute_create_jpa_repository_internal(java_executable, file_path, superclass_source, callback)
   local cmd_parts = { java_executable, "create-jpa-repository" }
   table.insert(cmd_parts, "--cwd=" .. vim.fn.getcwd())
-  table.insert(cmd_parts, "--file-path=" .. vim.fn.expand("%:p"))
+  table.insert(cmd_parts, "--file-path=" .. file_path)
   table.insert(cmd_parts, "--language=JAVA")
   table.insert(cmd_parts, "--ide=NEOVIM")
+  if superclass_source then
+    local base64_source = vim.base64.encode(superclass_source)
+    table.insert(cmd_parts, "--superclass-source=" .. base64_source)
+  end
 
   local output = {}
   vim.fn.jobstart(cmd_parts, {
@@ -31,29 +56,63 @@ function M.execute_create_jpa_repository(java_executable)
         local ok, result = json_parser.parse_response(raw_output)
 
         if ok and type(result) == "table" and result.succeed and result.data then
-          ---@cast result DataTransferObject
-          ---@type CreateNewFileResponse
-          local response_data = result.data
-          if response_data.filePath then
-            vim.cmd("edit " .. response_data.filePath)
-            vim.notify("JPA repository created successfully!", vim.log.levels.INFO)
-          end
+          callback(result.data, nil)
         else
           if #output > 0 then
             print(raw_output)
           end
           if not ok then
-            vim.notify("Failed to parse JPA repository response", vim.log.levels.WARN)
+            callback(nil, "Failed to parse JPA repository response")
           elseif result and not result.succeed then
-            vim.notify("JPA repository creation failed: " .. (result.errorReason or "Unknown error"),
-              vim.log.levels.ERROR)
+            callback(nil, "JPA repository creation failed: " .. (result.errorReason or "Unknown error"))
           end
         end
       else
-        vim.notify("JPA repository command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
+        callback(nil, "JPA repository command failed with exit code: " .. exit_code)
       end
     end,
   })
+end
+
+local function handle_response(java_executable, original_file_path, response_data)
+  if response_data.requiresSymbolSource and response_data.symbol then
+    vim.cmd("edit " .. response_data.filePath)
+
+    get_symbol_uri(response_data.symbol, function(uri, err)
+      if err then
+        vim.notify("Error getting symbol URI: " .. err, vim.log.levels.ERROR)
+        return
+      end
+
+      local content = GetJdtlsClassContent(uri)
+      local source_code = table.concat(content, "\n")
+
+      execute_create_jpa_repository_internal(java_executable, original_file_path, source_code,
+        function(new_response, error)
+          if error then
+            vim.notify(error, vim.log.levels.ERROR)
+          else
+            handle_response(java_executable, original_file_path, new_response)
+          end
+        end)
+    end)
+  else
+    if response_data.filePath then
+      vim.cmd("edit " .. response_data.filePath)
+      vim.notify("JPA repository created successfully!", vim.log.levels.INFO)
+    end
+  end
+end
+
+function M.execute_create_jpa_repository(java_executable)
+  local original_file_path = vim.fn.expand("%:p")
+  execute_create_jpa_repository_internal(java_executable, original_file_path, nil, function(response_data, error)
+    if error then
+      vim.notify(error, vim.log.levels.ERROR)
+    else
+      handle_response(java_executable, original_file_path, response_data)
+    end
+  end)
 end
 
 return M
