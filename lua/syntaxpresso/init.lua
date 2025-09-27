@@ -51,6 +51,12 @@ function M.setup(opts)
             action = function()
               commands.create_jpa_repository.execute_create_jpa_repository(executable)
             end
+          },
+          {
+            title = 'Create entity field',
+            action = function()
+              commands.create_entity_field.create_entity_field()
+            end
           }
         }
       end
