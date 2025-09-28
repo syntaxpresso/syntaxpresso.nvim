@@ -10,19 +10,6 @@ local function extend_array(t1, t2)
   return t1
 end
 
-local function render_main_title()
-  return n.rows(
-    { flex = 0 },
-    n.paragraph({
-      lines = {
-        n.line(n.text("New basic type attribute", "String")),
-      },
-      align = "center",
-      is_focusable = false,
-    })
-  )
-end
-
 local function render_field_package_type_component(_signal, options)
   local has_field_length = {
     "java.lang.String",
