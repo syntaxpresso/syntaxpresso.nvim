@@ -1,6 +1,6 @@
 local M = {}
 
-function M.create_entity_field()
+function M.create_entity_field(java_executable)
   local current_file = debug.getinfo(1, "S").source:sub(2)
   local plugin_root = vim.fn.fnamemodify(current_file, ":h:h:h")
   local ui_path = plugin_root .. "/syntaxpresso/ui/create_entity_field.lua"
@@ -10,6 +10,8 @@ function M.create_entity_field()
     return
   end
 
+  -- Store java_executable globally so the UI can access it
+  _G.syntaxpresso_java_executable = java_executable
   vim.cmd("luafile " .. ui_path)
 end
 

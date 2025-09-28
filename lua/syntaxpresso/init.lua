@@ -55,7 +55,7 @@ function M.setup(opts)
           {
             title = 'Create entity field',
             action = function()
-              commands.create_entity_field.create_entity_field()
+              commands.create_entity_field.create_entity_field(executable)
             end
           }
         }

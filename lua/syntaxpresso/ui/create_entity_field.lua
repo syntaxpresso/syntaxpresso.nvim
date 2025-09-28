@@ -1,11 +1,13 @@
 local n = require("nui-components")
 local basic_field = require("syntaxpresso.ui.basic_field")
+local enum_field = require("syntaxpresso.ui.enum_field")
 local select_one = require("syntaxpresso.ui.select_one")
 
 local renderer = n.create_renderer({ height = 7 })
 
-local signal = n.create_signal({
+local main_signal = n.create_signal({
   active_tab = "tab-1",
+  subtitle = "Unknown category",
   field_category = "basic",
   next_button_hidden = false,
   previous_button_hidden = true,
@@ -13,9 +15,10 @@ local signal = n.create_signal({
 })
 
 local basic_field_signal = basic_field.create_signal()
+local enum_field_signal = enum_field.create_signal()
 
 
-local function render_main_title()
+local function render_title()
   return n.paragraph({
     lines = {
       n.line(n.text("New Entity field", "String")),
@@ -25,33 +28,53 @@ local function render_main_title()
   })
 end
 
-local function render_field_category_selector()
+local function render_subtitle(_signal)
+  return n.paragraph({
+    lines = {
+      n.line(n.text(_signal.subtitle:get_value(), "String")),
+    },
+    align = "center",
+    is_focusable = false,
+  })
+end
+
+local function render_field_category_selector(_signal)
   local data = {
     n.node({ text = "Basic Field", is_done = true, id = "basic" }),
     n.node({ text = "Enum Field", is_done = false, id = "enum" }),
     n.node({ text = "ID Field", is_done = false, id = "id" }),
   }
-  return select_one.render_component(3, "Category", data, "field_category", signal, true)
+  return select_one.render_component(3, "Category", data, "field_category", _signal, true)
 end
 
-local function render_next_button()
+local function render_next_button(_signal)
   return n.button({
     flex = 1,
     label = "Next ->",
     align = "center",
     global_press_key = "<C-CR>",
     on_press = function()
-      renderer:set_size({ height = 30 })
-      signal.active_tab = "tab-2"
-      signal.next_button_hidden = true
-      signal.confirm_button_hidden = false
-      signal.previous_button_hidden = false
+      if _signal.field_category:get_value() == "basic" then
+        renderer:set_size({ height = 30 })
+        _signal["subtitle"] = "New basic type attribute"
+      elseif _signal.field_category:get_value() == "enum" then
+        renderer:set_size({ height = 17 })
+        _signal["subtitle"] = "New enum type attribute"
+      elseif _signal.field_category:get_value() == "id" then
+        _signal["subtitle"] = "New ID type attribute"
+      end
+      _signal.active_tab = "tab-2"
+      _signal.next_button_hidden = true
+      _signal.confirm_button_hidden = false
+      _signal.previous_button_hidden = false
+      renderer:close()
+      renderer:render(Component(_signal))
     end,
-    hidden = signal.next_button_hidden,
+    hidden = _signal.next_button_hidden,
   })
 end
 
-local function render_previous_button()
+local function render_previous_button(_signal)
   return n.button({
     flex = 1,
     label = "Previous <-",
@@ -59,71 +82,78 @@ local function render_previous_button()
     global_press_key = "<C-CR>",
     on_press = function()
       renderer:set_size({ height = 7 })
-      signal.active_tab = "tab-1"
-      signal.next_button_hidden = false
-      signal.previous_button_hidden = true
-      signal.confirm_button_hidden = true
+      _signal.active_tab = "tab-1"
+      _signal.field_category = "basic"
+      _signal.next_button_hidden = false
+      _signal.previous_button_hidden = true
+      _signal.confirm_button_hidden = true
+      renderer:close()
+      renderer:render(Component(_signal))
     end,
-    hidden = signal.previous_button_hidden,
+    hidden = _signal.previous_button_hidden,
   })
 end
 
-local function render_confirm_button()
+local function render_confirm_button(_signal)
   return n.button({
     flex = 1,
     label = "Confirm",
     align = "center",
     global_press_key = "<C-CR>",
     on_press = function()
-      local category = signal.field_category:get_value()
+      local category = _signal.field_category:get_value()
       if category == "basic" then
         local result = basic_field.get_field_data(basic_field_signal)
         vim.call("CreateBasicEntityFieldCallback", result)
         renderer:close()
-        -- elseif category == "enum" then
-        --   local result = enum_field.get_field_data(enum_field_signal)
-        --   vim.call("CreateEnumEntityFieldCallback", result)
-        --   renderer:close()
+      elseif category == "enum" then
+        local result = enum_field.get_field_data(enum_field_signal)
+        vim.call("CreateEnumEntityFieldCallback", result)
+        renderer:close()
         -- elseif category == "id" then
         --   local result = id_field.get_field_data(id_field_signal)
         --   vim.call("CreateIdEntityFieldCallback", result)
         --   renderer:close()
       end
     end,
-    hidden = signal.confirm_button_hidden,
+    hidden = _signal.confirm_button_hidden,
   })
 end
 
-local function render_field_component()
-  local category = signal.field_category:get_value()
+local function render_field_component(_signal)
+  local category = _signal.field_category:get_value()
   if category == "basic" then
     return basic_field.render_component(basic_field_signal)
+  elseif category == "enum" then
+    return enum_field.render_component(enum_field_signal, _G.syntaxpresso_java_executable)
   else
     return basic_field.render_component(basic_field_signal)
   end
 end
 
-local function render_component()
+function Component(_signal)
   return n.tabs(
-    { active_tab = signal.active_tab },
-    render_main_title(),
+    { active_tab = _signal.active_tab },
+    render_title(),
     n.tab(
       { id = "tab-1" },
-      render_field_category_selector()
+      render_field_category_selector(_signal)
     ),
     n.tab(
       { id = "tab-2" },
-      render_field_component()
+      render_subtitle(_signal),
+      render_field_component(_signal)
     ),
     n.tab(
       { id = "tab-3" }
     ),
     n.columns(
       { flex = 0 },
-      render_next_button(),
-      render_previous_button(),
-      render_confirm_button()
+      render_next_button(_signal),
+      render_previous_button(_signal),
+      render_confirm_button(_signal)
     )
   )
 end
-renderer:render(render_component())
+
+renderer:render(Component(main_signal))
