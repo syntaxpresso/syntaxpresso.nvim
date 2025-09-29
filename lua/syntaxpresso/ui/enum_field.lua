@@ -9,60 +9,10 @@ local function auto_field_name(type_name)
   end
   return ""
 end
-local json_parser = require("syntaxpresso.utils.json_parser")
 
 local M = {}
 
-local function get_enum_options(java_executable, callback)
-  local cwd = vim.fn.getcwd()
-  local cmd_parts = { java_executable, "get-all-files" }
-  table.insert(cmd_parts, "--cwd=" .. cwd)
-  table.insert(cmd_parts, "--file-type=ENUM")
-  table.insert(cmd_parts, "--language=JAVA")
 
-  local output = {}
-  vim.fn.jobstart(cmd_parts, {
-    on_stdout = function(_, data)
-      if data and #data > 0 then
-        for _, line in ipairs(data) do
-          if line ~= "" then
-            table.insert(output, line)
-          end
-        end
-      end
-    end,
-    on_stderr = function(_, data)
-      if data and #data > 0 and data[1] ~= "" then
-        vim.notify("Error getting enum options: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
-      end
-    end,
-    on_exit = function(_, exit_code)
-      if exit_code == 0 and #output > 0 then
-        local raw_output = table.concat(output, "")
-        local success, parsed = json_parser.parse_response(raw_output)
-        
-        if success and parsed and parsed.succeed and parsed.data and parsed.data.response then
-          local options = {}
-          for _, enum_info in ipairs(parsed.data.response) do
-            table.insert(options, {
-              name = enum_info.type,
-              type = enum_info.type,
-              package_path = enum_info.packagePath,
-              id = enum_info.filePath
-            })
-          end
-          callback(options)
-        else
-          vim.notify("Invalid response from get-all-files command", vim.log.levels.ERROR)
-          callback({})
-        end
-      else
-        vim.notify("get-all-files command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
-        callback({})
-      end
-    end,
-  })
-end
 
 local function render_field_type_component(_signal, options)
   local data = {}
@@ -72,12 +22,23 @@ local function render_field_type_component(_signal, options)
       n.node({ text = v.name, type = v.type, package_path = v.package_path, is_done = false, id = v.id })
     )
   end
+
+  -- Add a placeholder if no options are available
+  if #data == 0 then
+    table.insert(data, n.node({ text = "No enums found", type = nil, package_path = nil, is_done = false, id = nil }))
+  end
+
   return n.tree({
     autofocus = true,
-    size = #data,
+    size = math.max(#data, 1),
     border_label = "Type",
     data = data,
     on_select = function(selected_node, component)
+      -- Don't allow selection of placeholder item
+      if not selected_node.id then
+        return
+      end
+
       local tree = component:get_tree()
       for _, node in ipairs(data) do
         node.is_done = false
@@ -170,19 +131,12 @@ function M.create_signal()
 end
 
 function M.render_component(signal, java_executable)
-  -- Start with empty options and load them asynchronously
-  local enum_options_signal = n.create_signal({})
-  
-  -- Load enum options asynchronously
-  if java_executable then
-    get_enum_options(java_executable, function(options)
-      enum_options_signal:set_value(options)
-    end)
-  end
+  -- Use preloaded enum options from global variable
+  local enum_options = _G.syntaxpresso_enum_options or {}
 
   return n.rows(
     { flex = 0 },
-    render_field_type_component(signal, enum_options_signal:get_value()),
+    render_field_type_component(signal, enum_options),
     render_custom_select_one_component(signal, {
       n.node({ text = "ORDINAL", is_done = false, id = "ORDINAL" }),
       n.node({ text = "STRING", is_done = false, id = "STRING" }),
