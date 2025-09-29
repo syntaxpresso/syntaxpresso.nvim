@@ -62,7 +62,7 @@ function M.create_entity_field(java_executable)
 
   -- Store java_executable globally so the UI can access it
   _G.syntaxpresso_java_executable = java_executable
-  
+
   -- Preload enum options
   get_enum_options(java_executable, function(enum_options)
     _G.syntaxpresso_enum_options = enum_options

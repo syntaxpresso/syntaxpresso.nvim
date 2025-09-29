@@ -58,7 +58,7 @@ local function render_next_button(_signal)
         renderer:set_size({ height = 30 })
         _signal["subtitle"] = "New basic type attribute"
       elseif _signal.field_category:get_value() == "enum" then
-        renderer:set_size({ height = 17 })
+        renderer:set_size({ height = 20 })
         _signal["subtitle"] = "New enum type attribute"
       elseif _signal.field_category:get_value() == "id" then
         _signal["subtitle"] = "New ID type attribute"
@@ -125,7 +125,7 @@ local function render_field_component(_signal)
   if category == "basic" then
     return basic_field.render_component(basic_field_signal)
   elseif category == "enum" then
-    return enum_field.render_component(enum_field_signal, _G.syntaxpresso_java_executable)
+    return enum_field.render_component(enum_field_signal)
   else
     return basic_field.render_component(basic_field_signal)
   end

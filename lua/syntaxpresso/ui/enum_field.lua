@@ -130,8 +130,9 @@ function M.create_signal()
   })
 end
 
-function M.render_component(signal, java_executable)
+function M.render_component(signal)
   -- Use preloaded enum options from global variable
+  ---@type table[]
   local enum_options = _G.syntaxpresso_enum_options or {}
 
   return n.rows(
