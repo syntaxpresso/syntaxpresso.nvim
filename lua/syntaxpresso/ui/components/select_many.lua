@@ -10,7 +10,7 @@ local function extend_array(t1, t2)
   return t1
 end
 -- @param opts table: Configuration options for the select many component.
---   @field label string: The label for the tree border.
+--   @field title string: The title for the tree border.
 --   @field data table: A list of nodes for the tree, where each node is a table.
 --   @field signal table: A table that stores selected node states.
 --   @field signal_key string: The key in the `signal` table to store selected nodes.
@@ -23,7 +23,7 @@ end
 local function render_component(opts)
   local to_add = {}
   return n.tree({
-    border_label = opts.label,
+    border_label = opts.title,
     data = opts.data,
     size = opts.size or #opts.data,
     autofocus = opts.autofocus,
