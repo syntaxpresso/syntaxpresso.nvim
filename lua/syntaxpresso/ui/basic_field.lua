@@ -6,9 +6,6 @@ local text_input = require("syntaxpresso.ui.components.text_input")
 
 local M = {}
 
--- Store renderer reference for UI updates
-local renderer_ref = nil
-
 local signal = n.create_signal({
   field_package_path = "java.lang",
   field_type = "String",
@@ -148,11 +145,6 @@ local function field_package_type_callback(_signal, _selected_node, _data)
   _signal.field_temporal_hidden = field_temporal_hidden
   _signal.other_hidden = other_hidden
   _signal.other_extra_hidden = other_extra_hidden
-
-  -- Trigger UI re-render if renderer is available
-  if renderer_ref and renderer_ref.render then
-    renderer_ref:render(renderer_ref.current_component)
-  end
 end
 
 local function render_field_package_type_component(_signal, _options)
