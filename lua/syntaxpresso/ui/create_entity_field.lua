@@ -1,7 +1,8 @@
 local n = require("nui-components")
 local basic_field = require("syntaxpresso.ui.basic_field")
 local enum_field = require("syntaxpresso.ui.enum_field")
-local select_one = require("syntaxpresso.ui.select_one")
+local select_one = require("syntaxpresso.ui.components.select_one")
+local text = require("syntaxpresso.ui.components.text")
 
 local renderer = n.create_renderer({ height = 7 })
 
@@ -33,25 +34,6 @@ local field_category_data = {
   n.node({ text = "Enum Field", is_done = false, id = "enum" }),
   n.node({ text = "ID Field", is_done = false, id = "id" }),
 }
-
-local function render_text(_text, _is_focusable, _align)
-  return n.paragraph({
-    lines = {
-      n.line(n.text(_text, "String")),
-    },
-    align = _align or "center",
-    is_focusable = _is_focusable or false,
-  })
-end
-
-local function render_field_category_selector(_signal)
-  local data = {
-    n.node({ text = "Basic Field", is_done = true, id = "basic" }),
-    n.node({ text = "Enum Field", is_done = false, id = "enum" }),
-    n.node({ text = "ID Field", is_done = false, id = "id" }),
-  }
-  return select_one.render_component("Category", data, _signal, "field_category", true, 3)
-end
 
 local function render_next_button(_signal)
   return n.button({
@@ -140,14 +122,14 @@ end
 function Component(_signal)
   return n.tabs(
     { active_tab = _signal.active_tab },
-    render_text("New Entity field"),
+    text.render_component("New Entity field"),
     n.tab(
       { id = "tab-1" },
-      render_field_category_selector(_signal)
+      select_one.render_component("Category", field_category_data, main_signal, "field_category", true, 3)
     ),
     n.tab(
       { id = "tab-2" },
-      render_text(_signal.subtitle:get_value()),
+      text.render_component(_signal.subtitle:get_value()),
       render_field_component(_signal)
     ),
     n.tab(

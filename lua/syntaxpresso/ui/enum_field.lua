@@ -1,6 +1,6 @@
 local n = require("nui-components")
 
-local select_many = require("syntaxpresso.ui.select_many")
+local select_many = require("syntaxpresso.ui.components.select_many")
 
 local function auto_field_name(type_name)
   -- Convert CamelCase to camelCase for field name

@@ -1,6 +1,6 @@
 local get_main_class_cmd = require("syntaxpresso.commands.get_main_class")
 
-local select_one = require("syntaxpresso.ui.select_one")
+local select_one = require("syntaxpresso.ui.components.select_one")
 
 local n = require("nui-components")
 
