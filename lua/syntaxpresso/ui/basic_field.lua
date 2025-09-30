@@ -6,6 +6,25 @@ local text_input = require("syntaxpresso.ui.components.text_input")
 
 local M = {}
 
+local signal = n.create_signal({
+  field_package_path = "java.lang",
+  field_type = "String",
+  field_name = "",
+  field_length = "255",
+  other = {},
+  field_precision = "19",
+  field_scale = "2",
+  field_time_zone_storage = nil,
+  field_temporal = nil,
+  field_length_hidden = false,
+  field_temporal_hidden = true,
+  field_time_zone_storage_hidden = true,
+  field_scale_hidden = true,
+  field_precision_hidden = true,
+  other_extra_hidden = false,
+  other_hidden = true,
+})
+
 local has_field_length = {
   "java.lang.String",
   "java.net.URL",
@@ -134,60 +153,27 @@ local function render_field_package_type_component(_signal, _options)
     field_package_type_callback)
 end
 
-local function render_text_input_component(signal, title, signal_key, signal_hidden, size)
-  return n.text_input({
-    size = size or 0,
-    value = signal[signal_key],
-    border_label = title,
-    on_change = function(value, _)
-      signal[signal_key] = value
-    end,
-    hidden = signal[signal_hidden] or false,
-  })
-end
-
-function M.create_signal()
-  return n.create_signal({
-    field_package_path = "java.lang",
-    field_type = "String",
-    field_name = "",
-    field_length = "255",
-    other = {},
-    field_precision = "19",
-    field_scale = "2",
-    field_time_zone_storage = nil,
-    field_temporal = nil,
-    field_length_hidden = false,
-    field_temporal_hidden = true,
-    field_time_zone_storage_hidden = true,
-    field_scale_hidden = true,
-    field_precision_hidden = true,
-    other_extra_hidden = false,
-    other_hidden = true,
-  })
-end
-
-function M.render_component(signal)
+function M.render_component()
   return n.rows(
     render_field_package_type_component(signal, java_types.get_basic_types()),
-    render_text_input_component(signal, "Field name", "field_name", false, 1),
-    render_text_input_component(signal, "Field length", "field_length", "field_length_hidden", 1),
+    text_input.render_component("Field name", "signal,field_name", 1),
+    text_input.render_component("Field length", signal, "field_length", 1, signal.field_length_hidden:get_value()),
     select_one.render_component("Time Zone Storage", time_zone_storage_data, signal, "field_time_zone_storage", false,
       signal.field_time_zone_storage_hidden:get_value()),
     select_one.render_component("Temporal", field_temporal_data, signal, "field_temporal", false,
       signal.field_temporal_hidden:get_value()),
     n.columns(
       { flex = 0, hidden = signal.field_precision_hidden and signal.field_scale_hidden },
-      text_input.render_component(signal, "Field precision", "field_precision", signal.field_precision_hidden:get_value(),
-        1),
-      text_input.render_component(signal, "Field scale", "field_scale", signal.field_scale_hidden:get_value(), 1)
+      text_input.render_component("Field precision", signal, "field_precision", 1,
+        signal.field_precision_hidden:get_value()),
+      text_input.render_component("Field scale", signal, "field_scale", 1, signal.field_scale_hidden:get_value())
     ),
     select_many.render_component("Other", other_data, signal, "other", signal.other_hidden:get_value()),
     select_many.render_component("Other", other_extra_data, signal, "other", signal.other_extra_hidden:get_value())
   )
 end
 
-function M.get_field_data(signal)
+function M.get_field_data()
   return {
     field_package_path = signal.field_package_path:get_value(),
     field_type = signal.field_type:get_value(),

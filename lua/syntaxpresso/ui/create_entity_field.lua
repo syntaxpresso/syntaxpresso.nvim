@@ -1,5 +1,4 @@
 local n = require("nui-components")
-local java_types = require("syntaxpresso.utils.java_types")
 local basic_field = require("syntaxpresso.ui.basic_field")
 local enum_field = require("syntaxpresso.ui.enum_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
@@ -16,18 +15,6 @@ local main_signal = n.create_signal({
   confirm_button_hidden = true
 })
 
--- local enum_field_signal = n.create_signal({
---   field_path = nil,
---   field_type = nil,
---   field_name = "",
---   field_package_path = nil,
---   enum_type = "ORDINAL",
---   field_length = "255",
---   field_length_hidden = true,
---   other = {},
--- })
-
-local basic_field_signal = basic_field.create_signal()
 local enum_field_signal = enum_field.create_signal()
 
 local field_category_data = {
@@ -92,7 +79,7 @@ local function render_confirm_button(_signal)
     on_press = function()
       local category = _signal.field_category:get_value()
       if category == "basic" then
-        local result = basic_field.get_field_data(basic_field_signal)
+        local result = basic_field.get_field_data()
         vim.call("CreateBasicEntityFieldCallback", result)
         renderer:close()
       elseif category == "enum" then
@@ -112,11 +99,11 @@ end
 local function render_field_component(_signal)
   local category = _signal.field_category:get_value()
   if category == "basic" then
-    return basic_field.render_component(basic_field_signal)
+    return basic_field.render_component()
   elseif category == "enum" then
     return enum_field.render_component(enum_field_signal)
   else
-    return basic_field.render_component(basic_field_signal)
+    return basic_field.render_component()
   end
 end
 
