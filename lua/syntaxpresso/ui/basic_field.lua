@@ -7,10 +7,7 @@ local select_many = require("syntaxpresso.ui.components.select_many")
 
 local M = {}
 
-local renderer = n.create_renderer({
-  width = 65,
-  height = 20,
-})
+local renderer = n.create_renderer()
 
 local signal = n.create_signal({
   field_package_path = "java.lang",
