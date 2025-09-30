@@ -148,7 +148,7 @@ local function field_package_type_callback(_signal, _selected_node, _data)
   _signal.field_temporal_hidden = field_temporal_hidden
   _signal.other_hidden = other_hidden
   _signal.other_extra_hidden = other_extra_hidden
-  
+
   -- Trigger UI re-render if renderer is available
   if renderer_ref and renderer_ref.render then
     renderer_ref:render(renderer_ref.current_component)
@@ -171,7 +171,7 @@ function M.render_component()
     select_one.render_component("Temporal", field_temporal_data, signal, "field_temporal", false,
       signal.field_temporal_hidden:get_value()),
     n.columns(
-      { flex = 0, hidden = signal.field_precision_hidden and signal.field_scale_hidden },
+      { flex = 0 },
       text_input.render_component("Field precision", signal, "field_precision", 1,
         "field_precision_hidden"),
       text_input.render_component("Field scale", signal, "field_scale", 1, "field_scale_hidden")
