@@ -6,6 +6,17 @@ local text_input = require("syntaxpresso.ui.components.text_input")
 
 local M = {}
 
+-- Module state for renderer access
+local current_renderer = nil
+local current_component_func = nil
+local current_main_signal = nil
+
+function M.set_renderer(renderer, component_func, main_signal)
+  current_renderer = renderer
+  current_component_func = component_func
+  current_main_signal = main_signal
+end
+
 local signal = n.create_signal({
   field_package_path = "java.lang",
   field_type = "String",
@@ -145,6 +156,11 @@ local function field_package_type_callback(_signal, _selected_node, _data)
   _signal.field_temporal_hidden = field_temporal_hidden
   _signal.other_hidden = other_hidden
   _signal.other_extra_hidden = other_extra_hidden
+  
+  -- Re-render using stored renderer
+  if current_renderer and current_component_func and current_main_signal then
+    current_renderer:render(current_component_func(current_main_signal))
+  end
 end
 
 local function render_field_package_type_component(_signal, _options)
@@ -157,7 +173,7 @@ function M.render_component()
   return n.rows(
     render_field_package_type_component(signal, java_types.get_basic_types()),
     text_input.render_component("Field name", "signal,field_name", 1),
-    text_input.render_component("Field length", signal, "field_length", 1, signal.field_length_hidden:get_value()),
+    text_input.render_component("Field length", signal, "field_length", 1, "field_length_hidden"),
     select_one.render_component("Time Zone Storage", time_zone_storage_data, signal, "field_time_zone_storage", false,
       signal.field_time_zone_storage_hidden:get_value()),
     select_one.render_component("Temporal", field_temporal_data, signal, "field_temporal", false,
@@ -165,8 +181,8 @@ function M.render_component()
     n.columns(
       { flex = 0, hidden = signal.field_precision_hidden and signal.field_scale_hidden },
       text_input.render_component("Field precision", signal, "field_precision", 1,
-        signal.field_precision_hidden:get_value()),
-      text_input.render_component("Field scale", signal, "field_scale", 1, signal.field_scale_hidden:get_value())
+        "field_precision_hidden"),
+      text_input.render_component("Field scale", signal, "field_scale", 1, "field_scale_hidden")
     ),
     select_many.render_component("Other", other_data, signal, "other", signal.other_hidden:get_value()),
     select_many.render_component("Other", other_extra_data, signal, "other", signal.other_extra_hidden:get_value())

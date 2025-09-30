@@ -4,11 +4,11 @@ local n = require("nui-components")
 -- @param signal table: A table that stores the input value and hidden state.
 -- @param signal_key string: The key in the signal table to store the input value.
 -- @param size number|nil: The size of the text input (defaults to 0).
--- @param hidden boolean: Whether the component is hidden.
+-- @param signal_hidden_key string: The key in the signal table to check if the component is hidden.
 -- @param autofocus boolean|nil: Whether to autofocus the text input (optional).
 -- @param _on_change_callback function|nil: A callback function triggered on value change (optional).
 -- @return table: The rendered text input component.
-local function text_input_component(title, signal, signal_key, size, hidden, autofocus, _on_change_callback)
+local function text_input_component(title, signal, signal_key, size, signal_hidden_key, autofocus, _on_change_callback)
   return n.text_input({
     autofocus = autofocus,
     size = size or 0,
@@ -20,7 +20,7 @@ local function text_input_component(title, signal, signal_key, size, hidden, aut
         _on_change_callback(value, _)
       end
     end,
-    hidden = hidden or false,
+    hidden = signal[signal_hidden_key] or false,
   })
 end
 
