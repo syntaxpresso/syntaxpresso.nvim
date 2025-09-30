@@ -62,7 +62,12 @@ function M.show_create_file_ui(java_executable)
       n.node({ text = "Enum", is_done = false, id = "ENUM" }),
       n.node({ text = "Annotation", is_done = false, id = "ANNOTATION" }),
     }
-    return select_one.render_component("File type", data, _signal, "file_type", nil, nil)
+    return select_one.render_component({
+      label = "File type",
+      data = data,
+      signal = _signal,
+      signal_key = "file_type",
+    })
   end
 
   local function render_confirm_button()

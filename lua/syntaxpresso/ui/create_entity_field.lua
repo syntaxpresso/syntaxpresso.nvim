@@ -1,6 +1,5 @@
 local n = require("nui-components")
-local basic_field = require("syntaxpresso.ui.basic_field")
-local enum_field = require("syntaxpresso.ui.enum_field")
+local basic_field2 = require("syntaxpresso.ui.basic_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
 local text = require("syntaxpresso.ui.components.text")
 
@@ -15,8 +14,6 @@ local main_signal = n.create_signal({
   confirm_button_hidden = true
 })
 
-local enum_field_signal = enum_field.create_signal()
-
 local field_category_data = {
   n.node({ text = "Basic Field", is_done = true, id = "basic" }),
   n.node({ text = "Enum Field", is_done = false, id = "enum" }),
@@ -30,11 +27,11 @@ local function render_next_button(_signal)
     align = "center",
     global_press_key = "<C-CR>",
     on_press = function()
+      renderer:close()
       if _signal.field_category:get_value() == "basic" then
-        renderer:set_size({ height = 30 })
         _signal["subtitle"] = "New basic type attribute"
+        basic_field2.render()
       elseif _signal.field_category:get_value() == "enum" then
-        renderer:set_size({ height = 20 })
         _signal["subtitle"] = "New enum type attribute"
       elseif _signal.field_category:get_value() == "id" then
         _signal["subtitle"] = "New ID type attribute"
@@ -43,8 +40,6 @@ local function render_next_button(_signal)
       _signal.next_button_hidden = true
       _signal.confirm_button_hidden = false
       _signal.previous_button_hidden = false
-      renderer:close()
-      renderer:render(Component(_signal))
     end,
     hidden = _signal.next_button_hidden,
   })
@@ -79,12 +74,12 @@ local function render_confirm_button(_signal)
     on_press = function()
       local category = _signal.field_category:get_value()
       if category == "basic" then
-        local result = basic_field.get_field_data()
-        vim.call("CreateBasicEntityFieldCallback", result)
+        -- local result = basic_field.get_field_data()
+        -- vim.call("CreateBasicEntityFieldCallback", result)
         renderer:close()
       elseif category == "enum" then
-        local result = enum_field.get_field_data(enum_field_signal)
-        vim.call("CreateEnumEntityFieldCallback", result)
+        -- local result = enum_field.get_field_data(enum_field_signal)
+        -- vim.call("CreateEnumEntityFieldCallback", result)
         renderer:close()
         -- elseif category == "id" then
         --   local result = id_field.get_field_data(id_field_signal)
@@ -99,25 +94,33 @@ end
 local function render_field_component(_signal)
   local category = _signal.field_category:get_value()
   if category == "basic" then
-    return basic_field.render_component()
-  elseif category == "enum" then
-    return enum_field.render_component(enum_field_signal)
-  else
-    return basic_field.render_component()
+    --   return basic_field.render_component()
+    -- elseif category == "enum" then
+    --   return enum_field.render_component(enum_field_signal)
+    -- else
+    --   return basic_field.render_component()
   end
 end
 
 function Component(_signal)
   return n.tabs(
     { active_tab = _signal.active_tab },
-    text.render_component("New Entity field"),
+    text.render_component({ text = "New Entity field" }),
     n.tab(
       { id = "tab-1" },
-      select_one.render_component("Category", field_category_data, main_signal, "field_category", true, false, 3)
+      select_one.render_component({
+        label = "Category",
+        data = field_category_data,
+        signal = main_signal,
+        signal_key = "field_category",
+        signal_hidden_key = nil,
+        autofocus = true,
+        size = 3
+      })
     ),
     n.tab(
       { id = "tab-2" },
-      text.render_component(_signal.subtitle:get_value()),
+      text.render_component({ text = _signal.subtitle:get_value() }),
       render_field_component(_signal)
     ),
     n.tab(
