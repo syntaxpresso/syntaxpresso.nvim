@@ -1,14 +1,14 @@
 local n = require("nui-components")
 
--- @param size number|nil: The size of the tree (optional).
 -- @param label string: The label for the tree border.
 -- @param data table: A list of nodes for the tree, where each node is a table containing text and id.
--- @param signal_key string: The key in the signal table to store the selected node id.
 -- @param signal table: A table that stores the selected node id.
+-- @param signal_key string: The key in the signal table to store the selected node id.
 -- @param autofocus boolean|nil: If true, autofocuses the tree component (optional).
+-- @param size number|nil: The size of the tree (optional).
 -- @param on_select_callback function|nil: A callback function triggered on node selection (optional).
 -- @return table: The rendered tree component.
-local function render_component(size, label, data, signal_key, signal, autofocus, on_select_callback)
+local function render_component(label, data, signal, signal_key, autofocus, size, on_select_callback)
   return n.tree({
     autofocus = autofocus or false,
     size = size or #data,

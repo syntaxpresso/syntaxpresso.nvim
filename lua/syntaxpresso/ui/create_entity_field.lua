@@ -44,7 +44,7 @@ local function render_field_category_selector(_signal)
     n.node({ text = "Enum Field", is_done = false, id = "enum" }),
     n.node({ text = "ID Field", is_done = false, id = "id" }),
   }
-  return select_one.render_component(3, "Category", data, "field_category", _signal, true)
+  return select_one.render_component("Category", data, _signal, "field_category", true, 3)
 end
 
 local function render_next_button(_signal)

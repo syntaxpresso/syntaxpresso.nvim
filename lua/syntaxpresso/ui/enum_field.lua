@@ -22,12 +22,9 @@ local function render_field_type_component(_signal, options)
       n.node({ text = v.name, type = v.type, package_path = v.package_path, is_done = false, id = v.id })
     )
   end
-
-  -- Add a placeholder if no options are available
   if #data == 0 then
     table.insert(data, n.node({ text = "No enums found", type = nil, package_path = nil, is_done = false, id = nil }))
   end
-
   return n.tree({
     autofocus = true,
     size = math.max(#data, 1),
@@ -68,7 +65,7 @@ local function render_other_component(_signal)
     n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
     n.node({ text = "Unique", is_done = false, id = "unique" }),
   }
-  return select_many.render_component(nil, "Other", data, _signal, "other")
+  return select_many.render_component("Other", data, _signal, "other")
 end
 
 local function render_custom_select_one_component(_signal, _data, _title, _signal_key, _signal_hidden_key)
