@@ -132,7 +132,4 @@ function Component(_signal)
   )
 end
 
--- Set renderer for basic_field module to enable re-rendering in callbacks
-basic_field.set_renderer(renderer, Component, main_signal)
-
 renderer:render(Component(main_signal))
