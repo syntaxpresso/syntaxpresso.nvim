@@ -14,27 +14,33 @@ local main_signal = n.create_signal({
   confirm_button_hidden = true
 })
 
+-- local enum_field_signal = n.create_signal({
+--   field_path = nil,
+--   field_type = nil,
+--   field_name = "",
+--   field_package_path = nil,
+--   enum_type = "ORDINAL",
+--   field_length = "255",
+--   field_length_hidden = true,
+--   other = {},
+-- })
+
 local basic_field_signal = basic_field.create_signal()
 local enum_field_signal = enum_field.create_signal()
 
+local field_category_data = {
+  n.node({ text = "Basic Field", is_done = true, id = "basic" }),
+  n.node({ text = "Enum Field", is_done = false, id = "enum" }),
+  n.node({ text = "ID Field", is_done = false, id = "id" }),
+}
 
-local function render_title()
+local function render_text(_text, _is_focusable, _align)
   return n.paragraph({
     lines = {
-      n.line(n.text("New Entity field", "String")),
+      n.line(n.text(_text, "String")),
     },
-    align = "center",
-    is_focusable = false,
-  })
-end
-
-local function render_subtitle(_signal)
-  return n.paragraph({
-    lines = {
-      n.line(n.text(_signal.subtitle:get_value(), "String")),
-    },
-    align = "center",
-    is_focusable = false,
+    align = _align or "center",
+    is_focusable = _is_focusable or false,
   })
 end
 
@@ -134,14 +140,14 @@ end
 function Component(_signal)
   return n.tabs(
     { active_tab = _signal.active_tab },
-    render_title(),
+    render_text("New Entity field"),
     n.tab(
       { id = "tab-1" },
       render_field_category_selector(_signal)
     ),
     n.tab(
       { id = "tab-2" },
-      render_subtitle(_signal),
+      render_text(_signal.subtitle:get_value()),
       render_field_component(_signal)
     ),
     n.tab(
