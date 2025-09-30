@@ -14,12 +14,14 @@ end
 -- @param data table: A list of nodes for the tree, where each node is a table.
 -- @param signal table: A table that stores selected node states.
 -- @param signal_key string: The key in the `signal` table to store selected nodes.
+-- @param hidden boolean|nil: If true, hides the tree component (defaults to false).
 -- @param autofocus boolean|nil: Whether to autofocus the component (optional).
 -- @param enable_all_option boolean: If true, enables an "All" option in the tree.
 -- @param size number|nil: The size of the tree (optional).
 -- @param on_select_callback function|nil: A callback function triggered on node selection (optional).
 -- @return table: The rendered tree component.
-local function render_component(label, data, signal, signal_key, autofocus, enable_all_option, size, on_select_callback)
+local function render_component(label, data, signal, signal_key, hidden, autofocus, enable_all_option, size,
+                                on_select_callback)
   local to_add = {}
   return n.tree({
     border_label = label,
@@ -61,7 +63,7 @@ local function render_component(label, data, signal, signal_key, autofocus, enab
         end
       end
       if on_select_callback then
-        on_select_callback(selected_node, signal)
+        on_select_callback(signal, selected_node, data)
       end
       tree:render()
     end,
@@ -75,6 +77,7 @@ local function render_component(label, data, signal, signal_key, autofocus, enab
       line:append(node.text)
       return line
     end,
+    hidden = hidden or false
   })
 end
 
