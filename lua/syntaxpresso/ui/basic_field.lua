@@ -173,8 +173,8 @@ function M.render_component()
     n.columns(
       { flex = 0 },
       text_input.render_component("Field precision", signal, "field_precision", 1,
-        "field_precision_hidden"),
-      text_input.render_component("Field scale", signal, "field_scale", 1, "field_scale_hidden")
+        "field_precision_hidden", false, 1),
+      text_input.render_component("Field scale", signal, "field_scale", 1, "field_scale_hidden", false, 1)
     ),
     select_many.render_component("Other", other_data, signal, "other", signal.other_hidden:get_value()),
     select_many.render_component("Other", other_extra_data, signal, "other", signal.other_extra_hidden:get_value())
