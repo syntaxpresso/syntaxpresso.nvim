@@ -20,7 +20,7 @@ end
 -- @param size number|nil: The size of the tree (optional).
 -- @param on_select_callback function|nil: A callback function triggered on node selection (optional).
 -- @return table: The rendered tree component.
-local function render_component(label, data, signal, signal_key, hidden, autofocus, enable_all_option, size,
+local function render_component(label, data, signal, signal_key, signal_hidden_key, autofocus, enable_all_option, size,
                                 on_select_callback)
   local to_add = {}
   return n.tree({
@@ -77,7 +77,7 @@ local function render_component(label, data, signal, signal_key, hidden, autofoc
       line:append(node.text)
       return line
     end,
-    hidden = hidden or false
+    hidden = signal[signal_hidden_key] or false 
   })
 end
 

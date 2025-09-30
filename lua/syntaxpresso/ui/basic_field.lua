@@ -168,8 +168,8 @@ function M.render_component()
         "field_precision_hidden", false, 1),
       text_input.render_component("Field scale", signal, "field_scale", 1, "field_scale_hidden", false, 1)
     ),
-    select_many.render_component("Other", other_data, signal, "other", signal.other_hidden:get_value()),
-    select_many.render_component("Other", other_extra_data, signal, "other", signal.other_extra_hidden:get_value())
+    select_many.render_component("Other", other_data, signal, "other", "other_hidden"),
+    select_many.render_component("Other", other_extra_data, signal, "other", "other_extra_hidden")
   )
 end
 
