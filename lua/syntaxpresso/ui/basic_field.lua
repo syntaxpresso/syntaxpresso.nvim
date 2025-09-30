@@ -28,7 +28,6 @@ local signal = n.create_signal({
   other_hidden = true,
 })
 
-
 local has_field_length = {
   "java.lang.String",
   "java.net.URL",
