@@ -3,6 +3,7 @@ local select_one = require("syntaxpresso.ui.components.select_one")
 local text_input = require("syntaxpresso.ui.components.text_input")
 local text = require("syntaxpresso.ui.components.text")
 local java_types = require("syntaxpresso.utils.java_types")
+local select_many = require("syntaxpresso.ui.components.select_many")
 
 local M = {}
 
@@ -90,14 +91,6 @@ local other_extra_data = {
   n.node({ text = "Unique", is_done = false, id = "unique" }),
 }
 
-
-local function extend_array(t1, t2)
-  for _, v in ipairs(t2) do
-    table.insert(t1, v)
-  end
-  return t1
-end
-
 local function generate_field_package_type_data(_options)
   local data = {}
   for _, v in ipairs(_options) do
@@ -175,104 +168,6 @@ local function render_field_package_type_component(_signal, _options)
   })
 end
 
-local function render_custom_select_one_component(_signal, _data, _title, _signal_key, _signal_hidden_key)
-  return n.tree({
-    autofocus = false,
-    size = #_data,
-    border_label = _title,
-    data = _data,
-    on_select = function(selected_node, component)
-      local tree = component:get_tree()
-      for _, node in ipairs(_data) do
-        node.is_done = false
-      end
-      selected_node.is_done = true
-      _signal[_signal_key] = selected_node.id
-      tree:render()
-    end,
-    prepare_node = function(node, line, _)
-      if node.is_done then
-        line:append("◉", "String")
-      else
-        line:append("○", "Comment")
-      end
-      line:append(" ")
-      line:append(node.text)
-      return line
-    end,
-    hidden = _signal[_signal_hidden_key],
-  })
-end
-
-local function render_text_input_component(title, signal_key, signal_hidden, size)
-  return n.text_input({
-    flex = 1,
-    size = size or 0,
-    value = signal[signal_key],
-    border_label = title,
-    on_change = function(value, _)
-      signal[signal_key] = value
-    end,
-    hidden = signal[signal_hidden] or false,
-  })
-end
-
-local function render_custom_select_many_component(_signal, _data, _title, _signal_key, _signal_hidden_key)
-  local to_add = {}
-  return n.tree({
-    size = #_data,
-    border_label = _title,
-    data = _data,
-    on_select = function(selected_node, component)
-      local tree = component:get_tree()
-      local all_enable = false
-      if all_enable and selected_node.text == "All" then
-        local all_done = not selected_node.is_done
-        for _, node in ipairs(_data) do
-          node.is_done = all_done
-        end
-        _signal[_signal_key] = all_done and vim.tbl_map(function(node)
-          return node.id
-        end, _data) or {}
-      else
-        local done = not selected_node.is_done
-        selected_node.is_done = done
-        if done then
-          table.insert(to_add, selected_node.id)
-          _signal[_signal_key] = extend_array(to_add, _signal[_signal_key])
-        else
-          to_add = vim.tbl_filter(function(value)
-            return value ~= selected_node.id
-          end, to_add)
-          _signal[_signal_key] = extend_array(to_add, _signal[_signal_key])
-        end
-        if all_enable then
-          local all_checked = true
-          for i = 2, #_data do
-            if not _data[i].is_done then
-              all_checked = false
-              break
-            end
-          end
-          _data[1].is_done = all_checked
-        end
-      end
-      tree:render()
-    end,
-    prepare_node = function(node, line, _)
-      if node.is_done then
-        line:append("☑", "String")
-      else
-        line:append("◻", "Comment")
-      end
-      line:append(" ")
-      line:append(node.text)
-      return line
-    end,
-    hidden = _signal[_signal_hidden_key],
-  })
-end
-
 local function render_confirm_button()
   return n.button({
     flex = 1,
@@ -314,8 +209,8 @@ local function render_component()
       title = "Field length",
       signal = signal,
       signal_key = "field_length",
-      size = 1,
-      signal_hidden_key = "field_length_hidden"
+      signal_hidden_key = "field_length_hidden",
+      size = 1
     }),
     select_one.render_component({
       label = "Time Zone Storage",
@@ -324,32 +219,46 @@ local function render_component()
       signal_key = "field_time_zone_storage",
       signal_hidden_key = "field_time_zone_storage_hidden"
     }),
-    -- render_custom_select_one_component(signal, {
-    --   n.node({ text = "NATIVE", is_done = false, id = "NATIVE" }),
-    --   n.node({ text = "NORMALIZE", is_done = false, id = "NORMALIZE" }),
-    --   n.node({ text = "NORMALIZE_UTC", is_done = false, id = "NORMALIZE_UTC" }),
-    --   n.node({ text = "COLUMN", is_done = false, id = "COLUMN" }),
-    --   n.node({ text = "AUTO", is_done = false, id = "AUTO" }),
-    -- }, "Time Zone Storage", "field_time_zone_storage", "field_time_zone_storage_hidden"),
-    render_custom_select_one_component(signal, {
-      n.node({ text = "DATE", is_done = false, id = "DATE" }),
-      n.node({ text = "TIME", is_done = false, id = "TIME" }),
-      n.node({ text = "TIMESTAMP", is_done = false, id = "TIMESTAMP" }),
-    }, "Temporal", "field_temporal", "field_temporal_hidden"),
+    select_one.render_component({
+      label = "Temporal",
+      data = field_temporal_data,
+      signal = signal,
+      signal_key = "field_temporal",
+      signal_hidden_key = "field_temporal_hidden"
+    }),
     n.columns(
       { flex = 0, hidden = signal.field_precision_hidden and signal.field_scale_hidden },
-      render_text_input_component("Field precision", "field_precision", "field_precision_hidden", 1),
-      render_text_input_component("Field scale", "field_scale", "field_scale_hidden", 1)
+      text_input.render_component({
+        title = "Field precision",
+        signal = signal,
+        signal_key = "field_precision",
+        signal_hidden_key = "field_precision_hidden",
+        flex = 1,
+        size = 1
+      }),
+      text_input.render_component({
+        title = "Field scale",
+        signal = signal,
+        signal_key = "field_scale",
+        signal_hidden_key = "field_scale_hidden",
+        flex = 1,
+        size = 1
+      })
     ),
-    render_custom_select_many_component(signal, {
-      n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-      n.node({ text = "Unique", is_done = false, id = "unique" }),
-    }, "Other", "other", "other_hidden"),
-    render_custom_select_many_component(signal, {
-      n.node({ text = "Large object", is_done = false, id = "large_object" }),
-      n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-      n.node({ text = "Unique", is_done = false, id = "unique" }),
-    }, "Other", "other", "other_extra_hidden"),
+    select_many.render_component({
+      title = "Other",
+      data = other_data,
+      signal = signal,
+      signal_key = "other",
+      signal_hidden_key = "other_hidden",
+    }),
+    select_many.render_component({
+      title = "Other",
+      data = other_extra_data,
+      signal = signal,
+      signal_key = "other",
+      signal_hidden_key = "other_extra_hidden",
+    }),
     render_confirm_button()
   )
 end
