@@ -1,4 +1,5 @@
 local n = require("nui-components")
+local java_types = require("syntaxpresso.utils.java_types")
 local basic_field = require("syntaxpresso.ui.basic_field")
 local enum_field = require("syntaxpresso.ui.enum_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
@@ -125,7 +126,7 @@ function Component(_signal)
     text.render_component("New Entity field"),
     n.tab(
       { id = "tab-1" },
-      select_one.render_component("Category", field_category_data, main_signal, "field_category", true, 3)
+      select_one.render_component("Category", field_category_data, main_signal, "field_category", true, false, 3)
     ),
     n.tab(
       { id = "tab-2" },
