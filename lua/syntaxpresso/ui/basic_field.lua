@@ -6,17 +6,6 @@ local text_input = require("syntaxpresso.ui.components.text_input")
 
 local M = {}
 
--- Module state for renderer access
-local current_renderer = nil
-local current_component_func = nil
-local current_main_signal = nil
-
-function M.set_renderer(renderer, component_func, main_signal)
-  current_renderer = renderer
-  current_component_func = component_func
-  current_main_signal = main_signal
-end
-
 local signal = n.create_signal({
   field_package_path = "java.lang",
   field_type = "String",
@@ -156,11 +145,6 @@ local function field_package_type_callback(_signal, _selected_node, _data)
   _signal.field_temporal_hidden = field_temporal_hidden
   _signal.other_hidden = other_hidden
   _signal.other_extra_hidden = other_extra_hidden
-  
-  -- Re-render using stored renderer
-  if current_renderer and current_component_func and current_main_signal then
-    current_renderer:render(current_component_func(current_main_signal))
-  end
 end
 
 local function render_field_package_type_component(_signal, _options)
