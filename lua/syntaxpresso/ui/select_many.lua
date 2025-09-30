@@ -10,20 +10,22 @@ local function extend_array(t1, t2)
   return t1
 end
 --
--- @param size number|nil: The size of the tree (optional).
 -- @param label string: The label for the tree border.
 -- @param data table: A list of nodes for the tree, where each node is a table.
 -- @param signal table: A table that stores selected node states.
 -- @param signal_key string: The key in the `signal` table to store selected nodes.
+-- @param autofocus boolean|nil: Whether to autofocus the component (optional).
 -- @param enable_all_option boolean: If true, enables an "All" option in the tree.
+-- @param size number|nil: The size of the tree (optional).
 -- @param on_select_callback function|nil: A callback function triggered on node selection (optional).
 -- @return table: The rendered tree component.
-local function render_component(size, label, data, signal, signal_key, enable_all_option, on_select_callback)
+local function render_component(label, data, signal, signal_key, autofocus, enable_all_option, size, on_select_callback)
   local to_add = {}
   return n.tree({
-    size = size or #data,
     border_label = label,
     data = data,
+    size = size or #data,
+    autofocus = autofocus,
     on_select = function(selected_node, component)
       local tree = component:get_tree()
       local all_enable = enable_all_option or false
