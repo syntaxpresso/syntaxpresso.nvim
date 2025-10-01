@@ -96,7 +96,7 @@ local function render_component(_previous_button_fn)
   return n.rows(
     { flex = 0 },
     text.render_component({ text = "New Entity field" }),
-    text.render_component({ text = "New enum attribute" }),
+    text.render_component({ text = "New Enum attribute" }),
     select_one.render_component({
       label = "Field type",
       data = create_field_type_data(),
