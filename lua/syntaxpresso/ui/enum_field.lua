@@ -19,6 +19,16 @@ local signal = n.create_signal({
   other = {},
 })
 
+local enum_type_data = {
+  n.node({ text = "ORDINAL", is_done = false, id = "ORDINAL" }),
+  n.node({ text = "STRING", is_done = false, id = "STRING" }),
+}
+
+local other_data = {
+  n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
+  n.node({ text = "Unique", is_done = false, id = "unique" }),
+}
+
 local function auto_field_name(type_name)
   -- Convert CamelCase to camelCase for field name
   if type_name and #type_name > 0 then
@@ -27,114 +37,31 @@ local function auto_field_name(type_name)
   return ""
 end
 
-local function render_main_title()
-  return n.rows(
-    { flex = 0 },
-    n.paragraph({
-      lines = {
-        n.line(n.text("New enum type attribute", "String")),
-      },
-      align = "center",
-      is_focusable = false,
-    })
-  )
-end
-
-local function render_field_type_component(_signal, options)
+local function create_field_type_data()
+  local enum_data = _G.syntaxpresso_enum_options or {}
   local data = {}
-  for _, v in ipairs(options) do
+  for _, v in ipairs(enum_data) do
     table.insert(
       data,
       n.node({ text = v.name, type = v.type, package_path = v.package_path, is_done = false, id = v.id })
     )
   end
-  return n.tree({
-    autofocus = true,
-    size = #data,
-    border_label = "Type",
-    data = data,
-    on_select = function(selected_node, component)
-      local tree = component:get_tree()
-      for _, node in ipairs(data) do
-        node.is_done = false
-      end
-      selected_node.is_done = true
-      _signal["field_path"] = selected_node.id
-      _signal["field_type"] = selected_node.type
-      _signal["field_package_path"] = selected_node.package_path
-      _signal["field_name"] = auto_field_name(selected_node.type)
-      tree:render()
-    end,
-    prepare_node = function(node, line, _)
-      if node.is_done then
-        line:append("◉", "String")
-      else
-        line:append("○", "Comment")
-      end
-      line:append(" ")
-      line:append(node.text)
-      return line
-    end,
-  })
+  return data
 end
 
-local function render_other_component(_signal)
-  local data = {
-    n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-    n.node({ text = "Unique", is_done = false, id = "unique" }),
-  }
-  return select_many.render_component({
-    title = "Other",
-    data = data,
-    signal = _signal,
-    signal_key = "other",
-  })
+local function field_type_callback(_signal, _selected_node, _data)
+  _signal["field_path"] = _selected_node.id
+  _signal["field_type"] = _selected_node.type
+  _signal["field_package_path"] = _selected_node.package_path
+  _signal["field_name"] = auto_field_name(_selected_node.type)
 end
 
-local function render_custom_select_one_component(_signal, _data, _title, _signal_key, _signal_hidden_key)
-  return n.tree({
-    autofocus = false,
-    size = #_data,
-    border_label = _title,
-    data = _data,
-    on_select = function(selected_node, component)
-      local tree = component:get_tree()
-      for _, node in ipairs(_data) do
-        node.is_done = false
-      end
-      selected_node.is_done = true
-      _signal[_signal_key] = selected_node.id
-      if selected_node.id == "STRING" then
-        _signal[_signal_hidden_key] = false
-      else
-        _signal[_signal_hidden_key] = true
-      end
-      tree:render()
-    end,
-    prepare_node = function(node, line, _)
-      if node.is_done then
-        line:append("◉", "String")
-      else
-        line:append("○", "Comment")
-      end
-      line:append(" ")
-      line:append(node.text)
-      return line
-    end,
-  })
-end
-
-local function render_text_input_component(title, signal_key, signal_hidden, size)
-  return n.text_input({
-    flex = 1,
-    size = size or 0,
-    value = signal[signal_key],
-    border_label = title,
-    on_change = function(value, _)
-      signal[signal_key] = value
-    end,
-    hidden = signal[signal_hidden] or false,
-  })
+local function enum_type_callback(_signal, _selected_node, _data)
+  if _selected_node.id == "STRING" then
+    _signal.field_length_hidden = false
+  else
+    _signal.field_length_hidden = true
+  end
 end
 
 local function render_confirm_button()
@@ -166,14 +93,41 @@ local function render_component(_previous_button_fn)
     { flex = 0 },
     text.render_component({ text = "New Entity field" }),
     text.render_component({ text = "New enum attribute" }),
-    render_field_type_component(signal, _G.syntaxpresso_enum_options or {}),
-    render_custom_select_one_component(signal, {
-      n.node({ text = "ORDINAL", is_done = false, id = "ORDINAL" }),
-      n.node({ text = "STRING", is_done = false, id = "STRING" }),
-    }, "Enum type", "enum_type", "field_length_hidden"),
-    render_text_input_component("Field name", "field_name", false, 1),
-    render_text_input_component("Field length", "field_length", "field_length_hidden", 1),
-    render_other_component(signal),
+    select_one.render_component({
+      label = "Field type",
+      data = create_field_type_data(),
+      signal = signal,
+      signal_key = "field_type",
+      autofocus = true,
+      on_select_callback = field_type_callback
+    }),
+    select_one.render_component({
+      label = "Enum type",
+      data = enum_type_data,
+      signal = signal,
+      signal_key = "enum_type",
+      on_select_callback = enum_type_callback
+    }),
+    text_input.render_component({
+      title = "Field name",
+      signal = signal,
+      signal_key = "field_name",
+      signal_hidden_key = "field_name_hidden",
+      size = 1
+    }),
+    text_input.render_component({
+      title = "Field length",
+      signal = signal,
+      signal_key = "field_length",
+      signal_hidden_key = "field_length_hidden",
+      size = 1
+    }),
+    select_many.render_component({
+      title = "Other",
+      data = other_data,
+      signal = signal,
+      signal_key = "other",
+    }),
     n.columns(
       _previous_button_fn(renderer),
       render_confirm_button()
