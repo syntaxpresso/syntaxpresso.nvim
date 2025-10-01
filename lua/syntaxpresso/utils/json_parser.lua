@@ -24,6 +24,9 @@ local M = {}
 ---@class CreateNewFileResponse
 ---@field filePath string
 
+---@class CreateEntityResponse
+---@field filePath string
+
 ---@alias SyntaxpressoResponse DataTransferObject
 
 ---Parse Java executable response that may contain debug output before JSON

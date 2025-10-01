@@ -53,6 +53,12 @@ function M.setup(opts)
             end
           },
           {
+            title = 'Create JPA entity',
+            action = function()
+              commands.create_entity.create_entity(executable)
+            end
+          },
+          {
             title = 'Create entity field',
             action = function()
               commands.create_entity_field.create_entity_field(executable)
