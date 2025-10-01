@@ -56,17 +56,6 @@ renderer:render(render_component())
 if _G.syntaxpresso_get_main_class and _G.syntaxpresso_java_executable then
   _G.syntaxpresso_get_main_class(_G.syntaxpresso_java_executable, function(main_class_info)
     if main_class_info and main_class_info.packageName then
-      vim.notify("Package name received: " .. main_class_info.packageName, vim.log.levels.INFO)
-      vim.notify("Signal type: " .. type(signal), vim.log.levels.INFO)
-      vim.notify("entity_package_name field type: " .. type(signal.entity_package_name), vim.log.levels.INFO)
-
-      if signal.entity_package_name and type(signal.entity_package_name) == "table" then
-        vim.notify("entity_package_name has set_value method: " .. tostring(signal.entity_package_name.set_value ~= nil),
-          vim.log.levels.INFO)
-        vim.notify("Available methods: " .. vim.inspect(vim.tbl_keys(signal.entity_package_name)), vim.log.levels.INFO)
-      end
-
-      -- Try direct assignment instead of set_value
       signal.entity_package_name = main_class_info.packageName
     end
   end)
