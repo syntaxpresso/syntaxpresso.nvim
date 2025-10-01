@@ -1,6 +1,7 @@
 local n = require("nui-components")
 local basic_field = require("syntaxpresso.ui.basic_field")
 local enum_field = require("syntaxpresso.ui.enum_field")
+local id_field = require("syntaxpresso.ui.id_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
 local text = require("syntaxpresso.ui.components.text")
 
@@ -12,7 +13,9 @@ local signal = n.create_signal({
   field_category = "basic",
   next_button_hidden = false,
   previous_button_hidden = true,
-  confirm_button_hidden = true
+  confirm_button_hidden = true,
+  enum_loading = false,
+  entity_info_loading = false
 })
 
 local field_category_data = {
@@ -20,6 +23,32 @@ local field_category_data = {
   n.node({ text = "Enum Field", is_done = false, id = "enum" }),
   n.node({ text = "ID Field", is_done = false, id = "id" }),
 }
+
+local function field_category_callback(_signal, _selected_node, _)
+  if _selected_node.id == "enum" then
+    -- Load enum options when enum category is selected
+    if _G.syntaxpresso_get_enum_options and _G.syntaxpresso_java_executable then
+      _signal.enum_loading = true
+      _G.syntaxpresso_get_enum_options(_G.syntaxpresso_java_executable, function(enum_options)
+        _G.syntaxpresso_enum_options = enum_options
+        _signal.enum_loading = false
+      end)
+    else
+      vim.notify("Enum options loader not available", vim.log.levels.ERROR)
+    end
+  elseif _selected_node.id == "id" then
+    -- Load entity info when id category is selected
+    if _G.syntaxpresso_get_entity_info and _G.syntaxpresso_java_executable then
+      _signal.entity_info_loading = true
+      _G.syntaxpresso_get_entity_info(_G.syntaxpresso_java_executable, function(entity_info)
+        _G.syntaxpresso_entity_info = entity_info
+        _signal.entity_info_loading = false
+      end)
+    else
+      vim.notify("Entity info loader not available", vim.log.levels.ERROR)
+    end
+  end
+end
 
 local function create_previous_button(child_renderer)
   return n.button({
@@ -52,6 +81,7 @@ local function render_next_button(_signal)
       elseif _signal.field_category:get_value() == "enum" then
         enum_field.render(create_previous_button)
       elseif _signal.field_category:get_value() == "id" then
+        id_field.render(create_previous_button)
       end
       _signal.active_tab = "tab-2"
       _signal.next_button_hidden = true
@@ -73,7 +103,8 @@ function M.CreateEntityFieldComponent(_signal)
       signal_key = "field_category",
       signal_hidden_key = nil,
       autofocus = true,
-      size = 3
+      size = 3,
+      on_select_callback = field_category_callback
     }),
     n.columns(
       { flex = 0 },

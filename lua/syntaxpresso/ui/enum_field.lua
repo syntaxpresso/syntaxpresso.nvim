@@ -40,6 +40,11 @@ end
 local function create_field_type_data()
   local enum_data = _G.syntaxpresso_enum_options or {}
   local data = {}
+  if #enum_data == 0 then
+    -- Return placeholder when no enum options are available
+    table.insert(data, n.node({ text = "Loading...", is_done = false, id = "loading" }))
+    return data
+  end
   for _, v in ipairs(enum_data) do
     table.insert(
       data,

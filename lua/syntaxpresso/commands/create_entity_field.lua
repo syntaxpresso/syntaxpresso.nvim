@@ -1,5 +1,55 @@
 local M = {}
 
+local function get_entity_info(java_executable, callback)
+  local current_file = vim.fn.expand('%:p')
+  if current_file == '' then
+    vim.notify("No file is currently open", vim.log.levels.ERROR)
+    callback(nil)
+    return
+  end
+
+  local cwd = vim.fn.getcwd()
+  local cmd_parts = { java_executable, "get-jpa-entity-info" }
+  table.insert(cmd_parts, "--cwd=" .. cwd)
+  table.insert(cmd_parts, "--file-path=" .. current_file)
+  table.insert(cmd_parts, "--language=JAVA")
+  table.insert(cmd_parts, "--ide=NEOVI")
+
+  local output = {}
+  vim.fn.jobstart(cmd_parts, {
+    on_stdout = function(_, data)
+      if data and #data > 0 then
+        for _, line in ipairs(data) do
+          if line ~= "" then
+            table.insert(output, line)
+          end
+        end
+      end
+    end,
+    on_stderr = function(_, data)
+      if data and #data > 0 and data[1] ~= "" then
+        vim.notify("Error getting entity info: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+      end
+    end,
+    on_exit = function(_, exit_code)
+      if exit_code == 0 and #output > 0 then
+        local raw_output = table.concat(output, "")
+        local json_parser = require("syntaxpresso.utils.json_parser")
+        local success, parsed = json_parser.parse_response(raw_output)
+        if success and parsed and parsed.succeed and parsed.data then
+          callback(parsed.data)
+        else
+          vim.notify("Invalid response from get-jpa-entity-info command", vim.log.levels.ERROR)
+          callback(nil)
+        end
+      else
+        vim.notify("get-jpa-entity-info command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
+        callback(nil)
+      end
+    end,
+  })
+end
+
 local function get_enum_options(java_executable, callback)
   local cwd = vim.fn.getcwd()
   local cmd_parts = { java_executable, "get-all-files" }
@@ -62,12 +112,11 @@ function M.create_entity_field(java_executable)
 
   -- Store java_executable globally so the UI can access it
   _G.syntaxpresso_java_executable = java_executable
+  -- Make functions available globally
+  _G.syntaxpresso_get_enum_options = get_enum_options
+  _G.syntaxpresso_get_entity_info = get_entity_info
 
-  -- Preload enum options
-  get_enum_options(java_executable, function(enum_options)
-    _G.syntaxpresso_enum_options = enum_options
-    vim.cmd("luafile " .. ui_path)
-  end)
+  vim.cmd("luafile " .. ui_path)
 end
 
 function CreateBasicEntityFieldCallback(result)
