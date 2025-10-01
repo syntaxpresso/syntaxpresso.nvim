@@ -49,14 +49,14 @@ local function create_field_type_data()
   return data
 end
 
-local function field_type_callback(_signal, _selected_node, _data)
+local function field_type_callback(_signal, _selected_node, _)
   _signal["field_path"] = _selected_node.id
   _signal["field_type"] = _selected_node.type
   _signal["field_package_path"] = _selected_node.package_path
   _signal["field_name"] = auto_field_name(_selected_node.type)
 end
 
-local function enum_type_callback(_signal, _selected_node, _data)
+local function enum_type_callback(_signal, _selected_node, _)
   if _selected_node.id == "STRING" then
     _signal.field_length_hidden = false
   else
