@@ -70,7 +70,6 @@ local function render_confirm_button()
     label = "Confirm",
     align = "center",
     global_press_key = "<C-CR>",
-    padding = { top = 1 },
     on_press = function()
       local result = {
         field_path = signal.field_path:get_value(),
