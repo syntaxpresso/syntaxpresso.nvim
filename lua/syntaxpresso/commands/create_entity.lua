@@ -69,13 +69,21 @@ function M.create_entity(java_executable)
     return
   end
 
-  -- Store java_executable globally so the UI can access it
-  _G.syntaxpresso_java_executable = java_executable
-  -- Make functions available globally
-  _G.syntaxpresso_get_main_class = get_main_class.get_main_class_info
-  _G.syntaxpresso_create_entity = create_new_jpa_entity
+  -- Load main class info first to get the package name
+  get_main_class.get_main_class_info(java_executable, function(main_class_info)
+    local default_package = "com.example"
+    
+    if main_class_info and main_class_info.packageName then
+      default_package = main_class_info.packageName
+    end
 
-  vim.cmd("luafile " .. ui_path)
+    -- Store java_executable and package globally so the UI can access them
+    _G.syntaxpresso_java_executable = java_executable
+    _G.syntaxpresso_default_package = default_package
+    _G.syntaxpresso_create_entity = create_new_jpa_entity
+
+    vim.cmd("luafile " .. ui_path)
+  end)
 end
 
 function CreateEntityCallback(result)
