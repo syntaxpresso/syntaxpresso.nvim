@@ -1,9 +1,9 @@
 local n = require("nui-components")
 local select_one = require("syntaxpresso.ui.components.select_one")
+local select_many = require("syntaxpresso.ui.components.select_many")
 local text_input = require("syntaxpresso.ui.components.text_input")
 local text = require("syntaxpresso.ui.components.text")
 local java_types = require("syntaxpresso.utils.java_types")
-local select_many = require("syntaxpresso.ui.components.select_many")
 
 local M = {}
 
@@ -164,22 +164,7 @@ local function render_field_package_type_component(_signal, _options)
   })
 end
 
-local function render_previous_button(_p_signal, _p_renderer, _create_entity_field_fn)
-  return n.button({
-    flex = 1,
-    label = "Previous <-",
-    align = "center",
-    on_press = function()
-      renderer:close()
-      _p_signal.field_category = "basic"
-      _p_signal.next_button_hidden = false
-      _p_signal.previous_button_hidden = true
-      _p_signal.confirm_button_hidden = true
-      _p_renderer:render(_create_entity_field_fn(_p_signal))
-    end,
-    hidden = signal.confirm_btn_hidden,
-  })
-end
+
 
 local function render_confirm_button()
   return n.button({
@@ -206,7 +191,7 @@ local function render_confirm_button()
   })
 end
 
-local function render_component(_p_signal, _p_renderer, _create_entity_field_fn)
+local function render_component(_previous_button_fn)
   return n.rows(
     { flex = 0 },
     text.render_component({ text = "New Entity field" }),
@@ -273,14 +258,14 @@ local function render_component(_p_signal, _p_renderer, _create_entity_field_fn)
       signal_hidden_key = "other_extra_hidden",
     }),
     n.columns(
-      render_previous_button(_p_signal, _p_renderer, _create_entity_field_fn),
+      _previous_button_fn(renderer),
       render_confirm_button()
     )
   )
 end
 
-function M.render(_p_signal, _p_renderer, _create_entity_field_fn)
-  renderer:render(render_component(_p_signal, _p_renderer, _create_entity_field_fn))
+function M.render(_previous_button_fn)
+  renderer:render(render_component(_previous_button_fn))
 end
 
 return M
