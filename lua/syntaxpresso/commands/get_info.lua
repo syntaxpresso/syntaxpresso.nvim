@@ -41,7 +41,7 @@ function M.execute_get_info(java_executable)
           ---@cast result DataTransferObject
           ---@type GetInfoResponse
           local response_data = result.data
-          
+
           local info_lines = {
             "Node Info:",
             "  File: " .. response_data.filePath,
