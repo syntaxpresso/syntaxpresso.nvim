@@ -9,14 +9,21 @@ local M = {}
 
 local renderer = n.create_renderer()
 
+local function entity_to_camel_case(entity_type)
+  if entity_type and #entity_type > 0 then
+    return string.lower(string.sub(entity_type, 1, 1)) .. string.sub(entity_type, 2)
+  end
+  return "gen"
+end
+
 local signal = n.create_signal({
   field_package_path = "java.lang",
   field_type = "Long",
   field_name = "id",
   id_generation = "auto",
   id_generation_type = "none",
-  generator_name = "GEN" .. "__gen",
-  sequence_name = "SEQ" .. "__seq",
+  generator_name = "gen__gen",
+  sequence_name = "gen__seq",
   initial_value = "1",
   allocation_size = "50",
   regular_id_generation_type_hidden = false,
@@ -27,6 +34,17 @@ local signal = n.create_signal({
   allocation_size_hidden = true,
   other = { "mandatory" },
 })
+
+-- Load entity info to set proper generator and sequence names
+if _G.syntaxpresso_get_entity_info and _G.syntaxpresso_java_executable then
+  _G.syntaxpresso_get_entity_info(_G.syntaxpresso_java_executable, function(entity_info)
+    if entity_info and entity_info.entityType then
+      local camel_case_type = entity_to_camel_case(entity_info.entityType)
+      signal.generator_name = camel_case_type .. "__gen"
+      signal.sequence_name = camel_case_type .. "__seq"
+    end
+  end)
+end
 
 local uuid_id_generation_type_data = {
   n.node({ text = "None", is_done = false, id = "none" }),

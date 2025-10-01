@@ -13,7 +13,7 @@ local function get_entity_info(java_executable, callback)
   table.insert(cmd_parts, "--cwd=" .. cwd)
   table.insert(cmd_parts, "--file-path=" .. current_file)
   table.insert(cmd_parts, "--language=JAVA")
-  table.insert(cmd_parts, "--ide=NEOVI")
+  table.insert(cmd_parts, "--ide=NEOVIM")
 
   local output = {}
   vim.fn.jobstart(cmd_parts, {
