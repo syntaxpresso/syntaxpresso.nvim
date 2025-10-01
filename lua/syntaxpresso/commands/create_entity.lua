@@ -72,7 +72,7 @@ function M.create_entity(java_executable)
   -- Load main class info first to get the package name
   get_main_class.get_main_class_info(java_executable, function(main_class_info)
     local default_package = "com.example"
-    
+
     if main_class_info and main_class_info.packageName then
       default_package = main_class_info.packageName
     end
@@ -93,18 +93,18 @@ function CreateEntityCallback(result)
     return
   end
 
-  create_new_jpa_entity(java_executable, result.entity_package_name, result.entity_name .. ".java", function(response_data)
-    if response_data then
-      vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)
-      -- Open the created file
-      vim.cmd("edit " .. response_data.filePath)
-    else
-      vim.notify("Failed to create entity", vim.log.levels.ERROR)
-    end
-  end)
+  create_new_jpa_entity(java_executable, result.entity_package_name, result.entity_name .. ".java",
+    function(response_data)
+      if response_data then
+        vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)
+        -- Open the created file
+        vim.cmd("edit " .. response_data.filePath)
+      else
+        vim.notify("Failed to create entity", vim.log.levels.ERROR)
+      end
+    end)
 end
 
 M.create_new_jpa_entity = create_new_jpa_entity
 
 return M
-
