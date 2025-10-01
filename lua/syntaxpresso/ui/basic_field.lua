@@ -164,12 +164,18 @@ local function render_field_package_type_component(_signal, _options)
   })
 end
 
-local function render_previous_button()
+local function render_previous_button(_p_signal, _p_renderer, _create_entity_field_fn)
   return n.button({
     flex = 1,
     label = "Previous <-",
     align = "center",
     on_press = function()
+      renderer:close()
+      _p_signal.field_category = "basic"
+      _p_signal.next_button_hidden = false
+      _p_signal.previous_button_hidden = true
+      _p_signal.confirm_button_hidden = true
+      _p_renderer:render(_create_entity_field_fn(_p_signal))
     end,
     hidden = signal.confirm_btn_hidden,
   })
@@ -200,10 +206,11 @@ local function render_confirm_button()
   })
 end
 
-local function render_component()
+local function render_component(_p_signal, _p_renderer, _create_entity_field_fn)
   return n.rows(
     { flex = 0 },
-    text.render_component({ text = "New basic field" }),
+    text.render_component({ text = "New Entity field" }),
+    text.render_component({ text = "New basic attribute" }),
     render_field_package_type_component(signal, java_types.get_basic_types()),
     text_input.render_component({
       title = "Field name",
@@ -266,14 +273,14 @@ local function render_component()
       signal_hidden_key = "other_extra_hidden",
     }),
     n.columns(
-      render_previous_button(),
+      render_previous_button(_p_signal, _p_renderer, _create_entity_field_fn),
       render_confirm_button()
     )
   )
 end
 
-function M.render()
-  renderer:render(render_component())
+function M.render(_p_signal, _p_renderer, _create_entity_field_fn)
+  renderer:render(render_component(_p_signal, _p_renderer, _create_entity_field_fn))
 end
 
 return M
