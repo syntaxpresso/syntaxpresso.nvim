@@ -56,7 +56,15 @@ renderer:render(render_component())
 if _G.syntaxpresso_get_main_class and _G.syntaxpresso_java_executable then
   _G.syntaxpresso_get_main_class(_G.syntaxpresso_java_executable, function(main_class_info)
     if main_class_info and main_class_info.packageName then
-      signal.entity_package_name = main_class_info.packageName
+      -- Use vim.schedule to ensure UI is fully rendered before accessing signal methods
+      vim.schedule(function()
+        if signal.entity_package_name and signal.entity_package_name.set_value then
+          signal.entity_package_name:set_value(main_class_info.packageName)
+        else
+          -- Fallback to direct assignment if set_value is not available
+          signal.entity_package_name = main_class_info.packageName
+        end
+      end)
     end
   end)
 end
