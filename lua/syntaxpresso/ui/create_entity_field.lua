@@ -1,13 +1,11 @@
 local n = require("nui-components")
-local basic_field2 = require("syntaxpresso.ui.basic_field")
+local basic_field = require("syntaxpresso.ui.basic_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
 local text = require("syntaxpresso.ui.components.text")
 
 local renderer = n.create_renderer({ height = 7 })
 
-local main_signal = n.create_signal({
-  active_tab = "tab-1",
-  subtitle = "Unknown category",
+local signal = n.create_signal({
   field_category = "basic",
   next_button_hidden = false,
   previous_button_hidden = true,
@@ -29,12 +27,9 @@ local function render_next_button(_signal)
     on_press = function()
       renderer:close()
       if _signal.field_category:get_value() == "basic" then
-        _signal["subtitle"] = "New basic type attribute"
-        basic_field2.render()
+        basic_field.render()
       elseif _signal.field_category:get_value() == "enum" then
-        _signal["subtitle"] = "New enum type attribute"
       elseif _signal.field_category:get_value() == "id" then
-        _signal["subtitle"] = "New ID type attribute"
       end
       _signal.active_tab = "tab-2"
       _signal.next_button_hidden = true
@@ -74,8 +69,6 @@ local function render_confirm_button(_signal)
     on_press = function()
       local category = _signal.field_category:get_value()
       if category == "basic" then
-        -- local result = basic_field.get_field_data()
-        -- vim.call("CreateBasicEntityFieldCallback", result)
         renderer:close()
       elseif category == "enum" then
         -- local result = enum_field.get_field_data(enum_field_signal)
@@ -91,41 +84,19 @@ local function render_confirm_button(_signal)
   })
 end
 
-local function render_field_component(_signal)
-  local category = _signal.field_category:get_value()
-  if category == "basic" then
-    --   return basic_field.render_component()
-    -- elseif category == "enum" then
-    --   return enum_field.render_component(enum_field_signal)
-    -- else
-    --   return basic_field.render_component()
-  end
-end
-
 function Component(_signal)
   return n.tabs(
     { active_tab = _signal.active_tab },
     text.render_component({ text = "New Entity field" }),
-    n.tab(
-      { id = "tab-1" },
-      select_one.render_component({
-        label = "Category",
-        data = field_category_data,
-        signal = main_signal,
-        signal_key = "field_category",
-        signal_hidden_key = nil,
-        autofocus = true,
-        size = 3
-      })
-    ),
-    n.tab(
-      { id = "tab-2" },
-      text.render_component({ text = _signal.subtitle:get_value() }),
-      render_field_component(_signal)
-    ),
-    n.tab(
-      { id = "tab-3" }
-    ),
+    select_one.render_component({
+      label = "Category",
+      data = field_category_data,
+      signal = signal,
+      signal_key = "field_category",
+      signal_hidden_key = nil,
+      autofocus = true,
+      size = 3
+    }),
     n.columns(
       { flex = 0 },
       render_next_button(_signal),
@@ -135,4 +106,4 @@ function Component(_signal)
   )
 end
 
-renderer:render(Component(main_signal))
+renderer:render(Component(signal))

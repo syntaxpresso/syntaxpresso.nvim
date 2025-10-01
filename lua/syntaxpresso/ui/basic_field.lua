@@ -164,13 +164,23 @@ local function render_field_package_type_component(_signal, _options)
   })
 end
 
+local function render_previous_button()
+  return n.button({
+    flex = 1,
+    label = "Previous <-",
+    align = "center",
+    on_press = function()
+    end,
+    hidden = signal.confirm_btn_hidden,
+  })
+end
+
 local function render_confirm_button()
   return n.button({
     flex = 1,
     label = "Confirm",
     align = "center",
     global_press_key = "<C-CR>",
-    padding = { top = 1 },
     on_press = function()
       local result = {
         field_package_path = signal.field_package_path:get_value(),
@@ -193,7 +203,7 @@ end
 local function render_component()
   return n.rows(
     { flex = 0 },
-    text.render_component({ text = "New basic attribute" }),
+    text.render_component({ text = "New basic field" }),
     render_field_package_type_component(signal, java_types.get_basic_types()),
     text_input.render_component({
       title = "Field name",
@@ -255,7 +265,10 @@ local function render_component()
       signal_key = "other",
       signal_hidden_key = "other_extra_hidden",
     }),
-    render_confirm_button()
+    n.columns(
+      render_previous_button(),
+      render_confirm_button()
+    )
   )
 end
 
