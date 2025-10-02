@@ -132,17 +132,25 @@ local function render_confirm_button()
     align = "center",
     global_press_key = "<C-CR>",
     on_press = function()
+      local function get_signal_value(field)
+        if type(field) == "table" and field.get_value then
+          return field:get_value()
+        else
+          return field
+        end
+      end
+
       local result = {
-        field_package_path = signal.field_package_path:get_value(),
-        field_type = signal.field_type:get_value(),
-        field_name = signal.field_name:get_value(),
-        id_generation = signal.id_generation:get_value(),
-        id_generation_type = signal.id_generation_type:get_value(),
-        generator_name = signal.generator_name:get_value(),
-        sequence_name = signal.sequence_name:get_value(),
-        initial_value = signal.initial_value:get_value(),
-        allocation_size = signal.allocation_size:get_value(),
-        other = signal.other:get_value(),
+        field_package_path = get_signal_value(signal.field_package_path),
+        field_type = get_signal_value(signal.field_type),
+        field_name = get_signal_value(signal.field_name),
+        id_generation = get_signal_value(signal.id_generation),
+        id_generation_type = get_signal_value(signal.id_generation_type),
+        generator_name = get_signal_value(signal.generator_name),
+        sequence_name = get_signal_value(signal.sequence_name),
+        initial_value = get_signal_value(signal.initial_value),
+        allocation_size = get_signal_value(signal.allocation_size),
+        other = get_signal_value(signal.other),
       }
       vim.call("CreateIdEntityFieldCallback", result)
       renderer:close()
