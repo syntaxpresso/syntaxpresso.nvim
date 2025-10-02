@@ -20,54 +20,89 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
 
   vim.notify("Starting create entity command...", vim.log.levels.INFO)
   
-  local output = {}
-  local job_id = vim.fn.jobstart(cmd_parts, {
-    stdout_buffered = true,
-    stderr_buffered = true,
-    on_stdout = function(_, data)
-      if data and #data > 0 then
-        for _, line in ipairs(data) do
-          if line ~= "" then
-            table.insert(output, line)
-          end
-        end
-      end
-    end,
-    on_stderr = function(_, data)
-      if data and #data > 0 and data[1] ~= "" then
-        vim.notify("Error creating entity: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
-        callback(nil)
-      end
-    end,
-    on_exit = function(_, exit_code)
+  -- Use vim.system if available (Neovim 0.10+), otherwise fall back to jobstart
+  if vim.system then
+    vim.system(cmd_parts, {}, function(result)
       local end_time = vim.loop.hrtime()
       local duration_ms = (end_time - start_time) / 1000000
-      vim.notify(string.format("Command completed in %.2f ms", duration_ms), vim.log.levels.INFO)
+      vim.notify(string.format("Command completed in %.2f ms (vim.system)", duration_ms), vim.log.levels.INFO)
       
-      if exit_code == 0 and #output > 0 then
-        local raw_output = table.concat(output, "")
+      if result.code == 0 and result.stdout and result.stdout ~= "" then
         vim.notify("Parsing response...", vim.log.levels.INFO)
-        local ok, result = json_parser.parse_response(raw_output)
+        local ok, parsed_result = json_parser.parse_response(result.stdout)
 
-        if ok and type(result) == "table" and result.succeed and result.data then
-          ---@cast result DataTransferObject
+        if ok and type(parsed_result) == "table" and parsed_result.succeed and parsed_result.data then
+          ---@cast parsed_result DataTransferObject
           ---@type CreateEntityResponse
-          local response_data = result.data
+          local response_data = parsed_result.data
           vim.notify("Entity parsing successful, executing callback...", vim.log.levels.INFO)
           callback(response_data)
         else
-          vim.notify("Failed to parse create-entity response. Raw output: " .. raw_output, vim.log.levels.WARN)
-          if ok and type(result) == "table" and result.errorReason then
-            vim.notify("Error: " .. result.errorReason, vim.log.levels.ERROR)
+          vim.notify("Failed to parse create-entity response. Raw output: " .. result.stdout, vim.log.levels.WARN)
+          if ok and type(parsed_result) == "table" and parsed_result.errorReason then
+            vim.notify("Error: " .. parsed_result.errorReason, vim.log.levels.ERROR)
           end
           callback(nil)
         end
       else
-        vim.notify("Create entity command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
+        vim.notify("Create entity command failed with exit code: " .. result.code, vim.log.levels.ERROR)
+        if result.stderr and result.stderr ~= "" then
+          vim.notify("Error: " .. result.stderr, vim.log.levels.ERROR)
+        end
         callback(nil)
       end
-    end,
-  })
+    end)
+  else
+    -- Fallback to jobstart for older Neovim versions
+    local output = {}
+    local job_id = vim.fn.jobstart(cmd_parts, {
+      stdout_buffered = true,
+      stderr_buffered = true,
+      on_stdout = function(_, data)
+        if data and #data > 0 then
+          for _, line in ipairs(data) do
+            if line ~= "" then
+              table.insert(output, line)
+            end
+          end
+        end
+      end,
+      on_stderr = function(_, data)
+        if data and #data > 0 and data[1] ~= "" then
+          vim.notify("Error creating entity: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+          callback(nil)
+        end
+      end,
+      on_exit = function(_, exit_code)
+        local end_time = vim.loop.hrtime()
+        local duration_ms = (end_time - start_time) / 1000000
+        vim.notify(string.format("Command completed in %.2f ms (jobstart)", duration_ms), vim.log.levels.INFO)
+        
+        if exit_code == 0 and #output > 0 then
+          local raw_output = table.concat(output, "")
+          vim.notify("Parsing response...", vim.log.levels.INFO)
+          local ok, result = json_parser.parse_response(raw_output)
+
+          if ok and type(result) == "table" and result.succeed and result.data then
+            ---@cast result DataTransferObject
+            ---@type CreateEntityResponse
+            local response_data = result.data
+            vim.notify("Entity parsing successful, executing callback...", vim.log.levels.INFO)
+            callback(response_data)
+          else
+            vim.notify("Failed to parse create-entity response. Raw output: " .. raw_output, vim.log.levels.WARN)
+            if ok and type(result) == "table" and result.errorReason then
+              vim.notify("Error: " .. result.errorReason, vim.log.levels.ERROR)
+            end
+            callback(nil)
+          end
+        else
+          vim.notify("Create entity command failed with exit code: " .. exit_code, vim.log.levels.ERROR)
+          callback(nil)
+        end
+      end,
+    })
+  end
 end
 
 function M.create_entity(java_executable)
