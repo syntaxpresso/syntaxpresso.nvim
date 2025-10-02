@@ -40,8 +40,8 @@ if _G.syntaxpresso_get_entity_info and _G.syntaxpresso_java_executable then
   _G.syntaxpresso_get_entity_info(_G.syntaxpresso_java_executable, function(entity_info)
     if entity_info and entity_info.entityType then
       local camel_case_type = entity_to_camel_case(entity_info.entityType)
-      signal["generator_name"] = camel_case_type .. "__gen"
-      signal["sequence_name"] = camel_case_type .. "__seq"
+      signal.generator_name = camel_case_type .. "__gen"
+      signal.sequence_name = camel_case_type .. "__seq"
     else
       -- If entity info fails, keep the default values
       vim.notify("Could not load entity info, using default generator/sequence names", vim.log.levels.WARN)
