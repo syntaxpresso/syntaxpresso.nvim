@@ -1,4 +1,5 @@
 local get_main_class_cmd = require("syntaxpresso.commands.get_main_class")
+local json_parser = require("syntaxpresso.utils.json_parser")
 
 local select_one = require("syntaxpresso.ui.components.select_one")
 
@@ -104,14 +105,42 @@ function M.show_create_file_ui(java_executable)
           "--source-directory=MAIN"
         }
 
+        local output = {}
         vim.fn.jobstart(cmd_parts, {
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stdout = function(_, data)
+            if data and #data > 0 then
+              for _, line in ipairs(data) do
+                if line ~= "" then
+                  table.insert(output, line)
+                end
+              end
+            end
+          end,
           on_stderr = function(_, data)
             if data and #data > 0 and data[1] ~= "" then
               vim.notify("Error creating file: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
             end
           end,
           on_exit = function(_, exit_code)
-            if exit_code == 0 then
+            if exit_code == 0 and #output > 0 then
+              local raw_output = table.concat(output, "")
+              local ok, result = json_parser.parse_response(raw_output)
+
+              if ok and type(result) == "table" and result.succeed and result.data then
+                local response_data = result.data
+                vim.notify("Java file created successfully!", vim.log.levels.INFO)
+                if response_data.filePath then
+                  vim.cmd("edit " .. response_data.filePath)
+                end
+              else
+                vim.notify("Java file created successfully!", vim.log.levels.INFO)
+                if ok and type(result) == "table" and result.errorReason then
+                  vim.notify("Warning: " .. result.errorReason, vim.log.levels.WARN)
+                end
+              end
+            elseif exit_code == 0 then
               vim.notify("Java file created successfully!", vim.log.levels.INFO)
             else
               vim.notify("Failed to create Java file (exit code: " .. exit_code .. ")", vim.log.levels.ERROR)
