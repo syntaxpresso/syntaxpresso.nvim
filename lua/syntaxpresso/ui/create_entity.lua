@@ -20,19 +20,15 @@ local function render_confirm_button()
       local package_name = signal.entity_package_name:get_value()
       local java_executable = _G.syntaxpresso_java_executable
       local create_entity_fn = _G.syntaxpresso_create_entity
-      
       if not java_executable then
         vim.notify("Java executable not found", vim.log.levels.ERROR)
         return
       end
-      
       if not create_entity_fn then
         vim.notify("Create entity function not found", vim.log.levels.ERROR)
         return
       end
-      
       renderer:close()
-      
       create_entity_fn(java_executable, package_name, entity_name .. ".java", function(response_data)
         if response_data then
           vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)

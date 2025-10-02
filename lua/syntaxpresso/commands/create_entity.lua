@@ -9,6 +9,7 @@ local M = {}
 ---@param file_name string File name for the entity (e.g., "Test.java")
 ---@param callback function Callback function that receives CreateEntityResponse or nil
 local function create_new_jpa_entity(java_executable, package_name, file_name, callback)
+  local start_time = vim.loop.hrtime()
   local cmd_parts = {
     java_executable,
     "create-new-jpa-entity",
@@ -17,8 +18,12 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
     "--file-name=" .. file_name
   }
 
+  vim.notify("Starting create entity command...", vim.log.levels.INFO)
+  
   local output = {}
-  vim.fn.jobstart(cmd_parts, {
+  local job_id = vim.fn.jobstart(cmd_parts, {
+    stdout_buffered = true,
+    stderr_buffered = true,
     on_stdout = function(_, data)
       if data and #data > 0 then
         for _, line in ipairs(data) do
@@ -35,14 +40,20 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
       end
     end,
     on_exit = function(_, exit_code)
+      local end_time = vim.loop.hrtime()
+      local duration_ms = (end_time - start_time) / 1000000
+      vim.notify(string.format("Command completed in %.2f ms", duration_ms), vim.log.levels.INFO)
+      
       if exit_code == 0 and #output > 0 then
         local raw_output = table.concat(output, "")
+        vim.notify("Parsing response...", vim.log.levels.INFO)
         local ok, result = json_parser.parse_response(raw_output)
 
         if ok and type(result) == "table" and result.succeed and result.data then
           ---@cast result DataTransferObject
           ---@type CreateEntityResponse
           local response_data = result.data
+          vim.notify("Entity parsing successful, executing callback...", vim.log.levels.INFO)
           callback(response_data)
         else
           vim.notify("Failed to parse create-entity response. Raw output: " .. raw_output, vim.log.levels.WARN)
