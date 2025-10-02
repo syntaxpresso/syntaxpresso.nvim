@@ -18,11 +18,15 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
     "--file-name=" .. file_name
   }
 
+  local cmd_string = table.concat(cmd_parts, " ")
+  vim.notify("Executing command: " .. cmd_string, vim.log.levels.INFO)
+  vim.notify("Current working directory: " .. vim.fn.getcwd(), vim.log.levels.INFO)
+  vim.notify("Java executable: " .. java_executable, vim.log.levels.INFO)
   vim.notify("Starting create entity command...", vim.log.levels.INFO)
   
   -- Use vim.system if available (Neovim 0.10+), otherwise fall back to jobstart
   if vim.system then
-    vim.system(cmd_parts, {}, function(result)
+    vim.system(cmd_parts, { timeout = 30000 }, function(result)
       local end_time = vim.loop.hrtime()
       local duration_ms = (end_time - start_time) / 1000000
       vim.notify(string.format("Command completed in %.2f ms (vim.system)", duration_ms), vim.log.levels.INFO)
