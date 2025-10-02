@@ -13,6 +13,9 @@ local function get_main_class_info(java_executable, callback)
     "--language=JAVA",
     "--ide=NEOVIM"
   }
+  
+  -- Debug: show the exact command being executed
+  vim.notify("Executing: " .. table.concat(cmd_parts, " "), vim.log.levels.DEBUG)
 
   local output = {}
   vim.fn.jobstart(cmd_parts, {
@@ -27,7 +30,11 @@ local function get_main_class_info(java_executable, callback)
     end,
     on_stderr = function(_, data)
       if data and #data > 0 and data[1] ~= "" then
-        vim.notify("Error getting main class: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
+        local error_msg = table.concat(data, "\n")
+        vim.notify("Error getting main class: " .. error_msg, vim.log.levels.ERROR)
+        -- Also log debug info
+        vim.notify("Working directory: " .. vim.fn.getcwd(), vim.log.levels.DEBUG)
+        vim.notify("Command: " .. table.concat(cmd_parts, " "), vim.log.levels.DEBUG)
         callback(nil)
       end
     end,

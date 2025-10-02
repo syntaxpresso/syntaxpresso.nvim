@@ -119,12 +119,16 @@ function M.create_entity(java_executable)
     return
   end
 
-  -- Load main class info first to get the package name
+  -- Try to load main class info to get the package name, but continue even if it fails
+  local notified_default = false
   get_main_class.get_main_class_info(java_executable, function(main_class_info)
     local default_package = "com.example"
 
     if main_class_info and main_class_info.packageName then
       default_package = main_class_info.packageName
+    elseif not notified_default then
+      vim.notify("Could not determine main class package, using default: " .. default_package, vim.log.levels.WARN)
+      notified_default = true
     end
 
     -- Store java_executable and package globally so the UI can access them
