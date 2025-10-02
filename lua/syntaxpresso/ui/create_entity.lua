@@ -30,13 +30,15 @@ local function render_confirm_button()
       end
       renderer:close()
       create_entity_fn(java_executable, package_name, entity_name .. ".java", function(response_data)
-        if response_data then
-          vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)
-          -- Open the created file
-          vim.cmd("edit " .. response_data.filePath)
-        else
-          vim.notify("Failed to create entity", vim.log.levels.ERROR)
-        end
+        vim.schedule(function()
+          if response_data then
+            vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)
+            -- Open the created file
+            vim.cmd("edit " .. response_data.filePath)
+          else
+            vim.notify("Failed to create entity", vim.log.levels.ERROR)
+          end
+        end)
       end)
     end,
   })
