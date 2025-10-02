@@ -131,7 +131,7 @@ function CreateEntityCallback(result)
   create_new_jpa_entity(java_executable, result.entity_package_name, result.entity_name .. ".java",
     function(response_data)
       if response_data then
-        vim.notify("Entity created successfully at: " .. response_data.filePath, vim.log.levels.INFO)
+        vim.notify("Entity created successfully.")
         -- Open the created file
         vim.cmd("edit " .. response_data.filePath)
       else
