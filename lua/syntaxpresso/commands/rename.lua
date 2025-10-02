@@ -133,6 +133,4 @@ function M.rename_with_input(java_executable)
   end)
 end
 
-
-
 return M

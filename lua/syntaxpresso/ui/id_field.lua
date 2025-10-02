@@ -90,7 +90,6 @@ local function create_field_type_data()
 end
 
 local function field_type_callback(_signal, _selected_node, _)
-  vim.notify(_selected_node.type, vim.log.levels.INFO)
   _signal.field_type = _selected_node.type
   _signal.field_package_path = _selected_node.package_path
   if _selected_node.type == "UUID" then

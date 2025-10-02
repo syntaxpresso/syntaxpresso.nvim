@@ -13,9 +13,6 @@ local function get_main_class_info(java_executable, callback)
     "--language=JAVA",
     "--ide=NEOVIM"
   }
-  
-  -- Debug: show the exact command being executed
-  vim.notify("Executing: " .. table.concat(cmd_parts, " "), vim.log.levels.DEBUG)
 
   local output = {}
   vim.fn.jobstart(cmd_parts, {

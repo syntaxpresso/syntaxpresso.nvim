@@ -144,7 +144,6 @@ function M.install(on_complete)
             vim.fn.system({ "chmod", "+x", executable_path })
 
             if vim.v.shell_error == 0 then
-              vim.notify("Binary is now executable!", vim.log.levels.INFO)
               on_complete(executable_path)
             else
               vim.notify("Failed to make binary executable. `chmod` failed with exit code: " .. vim.v.shell_error,

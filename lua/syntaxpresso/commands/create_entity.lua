@@ -9,7 +9,6 @@ local M = {}
 ---@param file_name string File name for the entity (e.g., "Test.java")
 ---@param callback function Callback function that receives CreateEntityResponse or nil
 local function create_new_jpa_entity(java_executable, package_name, file_name, callback)
-  local start_time = vim.loop.hrtime()
   local cmd_parts = {
     java_executable,
     "create-new-jpa-entity",
@@ -18,28 +17,16 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
     "--file-name=" .. file_name
   }
 
-  local cmd_string = table.concat(cmd_parts, " ")
-  vim.notify("Executing command: " .. cmd_string, vim.log.levels.INFO)
-  vim.notify("Current working directory: " .. vim.fn.getcwd(), vim.log.levels.INFO)
-  vim.notify("Java executable: " .. java_executable, vim.log.levels.INFO)
-  vim.notify("Starting create entity command...", vim.log.levels.INFO)
-  
   -- Use vim.system if available (Neovim 0.10+), otherwise fall back to jobstart
   if vim.system then
     vim.system(cmd_parts, { timeout = 30000 }, function(result)
-      local end_time = vim.loop.hrtime()
-      local duration_ms = (end_time - start_time) / 1000000
-      vim.notify(string.format("Command completed in %.2f ms (vim.system)", duration_ms), vim.log.levels.INFO)
-      
       if result.code == 0 and result.stdout and result.stdout ~= "" then
-        vim.notify("Parsing response...", vim.log.levels.INFO)
         local ok, parsed_result = json_parser.parse_response(result.stdout)
 
         if ok and type(parsed_result) == "table" and parsed_result.succeed and parsed_result.data then
           ---@cast parsed_result DataTransferObject
           ---@type CreateEntityResponse
           local response_data = parsed_result.data
-          vim.notify("Entity parsing successful, executing callback...", vim.log.levels.INFO)
           callback(response_data)
         else
           vim.notify("Failed to parse create-entity response. Raw output: " .. result.stdout, vim.log.levels.WARN)
@@ -59,7 +46,7 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
   else
     -- Fallback to jobstart for older Neovim versions
     local output = {}
-    local job_id = vim.fn.jobstart(cmd_parts, {
+    vim.fn.jobstart(cmd_parts, {
       stdout_buffered = true,
       stderr_buffered = true,
       on_stdout = function(_, data)
@@ -78,20 +65,14 @@ local function create_new_jpa_entity(java_executable, package_name, file_name, c
         end
       end,
       on_exit = function(_, exit_code)
-        local end_time = vim.loop.hrtime()
-        local duration_ms = (end_time - start_time) / 1000000
-        vim.notify(string.format("Command completed in %.2f ms (jobstart)", duration_ms), vim.log.levels.INFO)
-        
         if exit_code == 0 and #output > 0 then
           local raw_output = table.concat(output, "")
-          vim.notify("Parsing response...", vim.log.levels.INFO)
           local ok, result = json_parser.parse_response(raw_output)
 
           if ok and type(result) == "table" and result.succeed and result.data then
             ---@cast result DataTransferObject
             ---@type CreateEntityResponse
             local response_data = result.data
-            vim.notify("Entity parsing successful, executing callback...", vim.log.levels.INFO)
             callback(response_data)
           else
             vim.notify("Failed to parse create-entity response. Raw output: " .. raw_output, vim.log.levels.WARN)

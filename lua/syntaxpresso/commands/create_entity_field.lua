@@ -14,9 +14,6 @@ local function get_entity_info(java_executable, callback)
   table.insert(cmd_parts, "--file-path=" .. current_file)
   table.insert(cmd_parts, "--language=JAVA")
   table.insert(cmd_parts, "--ide=NEOVIM")
-  
-  -- Debug: show the exact command being executed
-  vim.notify("Executing: " .. table.concat(cmd_parts, " "), vim.log.levels.DEBUG)
 
   local output = {}
   vim.fn.jobstart(cmd_parts, {

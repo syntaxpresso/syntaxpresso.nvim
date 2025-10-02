@@ -105,11 +105,6 @@ function M.show_create_file_ui(java_executable)
         }
 
         vim.fn.jobstart(cmd_parts, {
-          on_stdout = function(_, data)
-            if data and #data > 0 and data[1] ~= "" then
-              vim.notify(table.concat(data, "\n"), vim.log.levels.INFO)
-            end
-          end,
           on_stderr = function(_, data)
             if data and #data > 0 and data[1] ~= "" then
               vim.notify("Error creating file: " .. table.concat(data, "\n"), vim.log.levels.ERROR)
