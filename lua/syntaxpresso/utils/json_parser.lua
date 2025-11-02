@@ -1,50 +1,73 @@
 local M = {}
 
----@class DataTransferObject
+---@class Response
+---@field command string
+---@field cwd string
 ---@field succeed boolean
 ---@field data table|nil
 ---@field errorReason string|nil
 
----@class RenameResponse
+---@class FileResponse
+---@field fileType string
+---@field filePackageName string
 ---@field filePath string
----@field renamedNodes integer
----@field newName string
 
----@class GetInfoResponse
----@field filePath string
----@field language string
----@field node string
----@field nodeText string
----@field nodeType string
+---@class ErrorResponse
+---@field error string
+---@field message string
 
----@class GetMainClassResponse
----@field filePath string
+---@class CreateJPARepositoryResponse
+---@field idFieldFound boolean
+---@field superclassType string|nil
+---@field repository FileResponse|nil
+
+---@class GetJpaEntityInfoResponse
+---@field isJpaEntity boolean
+---@field entityType string
+---@field entityPackageName string
+---@field superclassType string|nil
+---@field entityPath string|nil
+---@field idFieldType string|nil
+---@field idFieldPackageName string|nil
+
+---@class GetFilesResponse
+---@field files FileResponse[]
+---@field filesCount integer
+
+---@class PackageResponse
 ---@field packageName string
 
----@class CreateNewFileResponse
----@field filePath string
+---@class GetPackagesResponse
+---@field packages PackageResponse[]
+---@field packagesCount integer
+---@field rootPackageName string|nil
 
----@class CreateEntityResponse
----@field filePath string
+---@class CreateJPAOneToOneRelationshipResponse
+---@field success boolean
+---@field message string
+---@field owningSideEntityUpdated boolean
+---@field inverseSideEntityUpdated boolean
+---@field owningSideEntityPath string|nil
+---@field inverseSideEntityPath string|nil
 
----@alias SyntaxpressoResponse DataTransferObject
+---@alias SyntaxpressoResponse Response
 
 ---Parse Java executable response that may contain debug output before JSON
 ---@param raw_output string The raw output from the Java executable
 ---@return boolean success True if parsing succeeded
----@return DataTransferObject|string result The parsed JSON object or error message
+---@return Response|string result The parsed JSON object or error message
 function M.parse_response(raw_output)
-  if not raw_output or raw_output == "" then
-    return false, "Empty response"
-  end
+	if not raw_output or raw_output == "" then
+		return false, "Empty response"
+	end
 
-  local json_start = raw_output:find("{")
-  if not json_start then
-    return false, "No JSON found in response"
-  end
+	local json_start = raw_output:find("{")
+	if not json_start then
+		return false, "No JSON found in response"
+	end
 
-  local json_str = raw_output:sub(json_start)
-  return pcall(vim.json.decode, json_str)
+	local json_str = raw_output:sub(json_start)
+	return pcall(vim.json.decode, json_str)
 end
 
 return M
