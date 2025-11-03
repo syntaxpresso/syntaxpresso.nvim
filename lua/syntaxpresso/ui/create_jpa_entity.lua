@@ -9,8 +9,9 @@ local M = {}
 local renderer = n.create_renderer({ height = 7 })
 
 local signal = n.create_signal({
-	entity_name = "NewEntity",
-	entity_package_name = "",
+	file_name = "NewEntity",
+	package_name = "",
+	package_list = {},
 })
 
 local function render_confirm_button()
@@ -22,8 +23,8 @@ local function render_confirm_button()
 		on_press = function()
 			local result = {
 				cwd = vim.fn.getcwd(),
-				["package-name"] = signal.entity_package_name:get_value(),
-				["file-name"] = signal.entity_name:get_value(),
+				["package-name"] = signal.package_name:get_value(),
+				["file-name"] = signal.file_name:get_value(),
 			}
 			command_runner.execute("create-jpa-entity", result, function(response, error)
 				if error then
@@ -39,22 +40,41 @@ local function render_confirm_button()
 	})
 end
 
-function M.render_create_jpa_entity_ui(signal_values)
-	signal.entity_package_name = signal_values.entity_package_name
+local function process_data(data)
+	local packages_list = {}
+	local root_package = data.rootPackageName or ""
+	if data.packages then
+		for _, pkg in ipairs(data.packages) do
+			table.insert(packages_list, n.node({ text = pkg.packageName, is_done = true, id = pkg.packageName }))
+		end
+	end
+	signal.package_name = root_package
+	signal.package_list = packages_list
+end
+
+function M.render_create_jpa_entity_ui(data)
+	process_data(data.data)
 	local component = n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "Create new JPA Entity" }),
 		text_input.render_component({
 			title = "Entity name",
 			signal = signal,
-			signal_key = "entity_name",
+			signal_key = "file_name",
 			autofocus = true,
 			size = 1,
+		}),
+		select_one.render_component({
+			label = "Packages",
+			data = signal.package_list,
+			signal = signal,
+			signal_key = "package_name",
+			size = 5,
 		}),
 		text_input.render_component({
 			title = "Package name",
 			signal = signal,
-			signal_key = "entity_package_name",
+			signal_key = "package_name",
 			size = 1,
 		}),
 		n.columns({ flex = 0 }, render_confirm_button())

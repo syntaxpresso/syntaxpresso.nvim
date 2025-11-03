@@ -44,12 +44,8 @@ function M.setup(opts)
 									return
 								end
 								if response and response.data then
-									local rootPackage = response.data.rootPackageName or ""
-									local params = {
-										entity_package_name = rootPackage,
-									}
 									vim.schedule(function()
-										create_jpa_entity.render_create_jpa_entity_ui(params)
+										create_jpa_entity.render_create_jpa_entity_ui(response)
 									end)
 								end
 							end)
@@ -59,6 +55,7 @@ function M.setup(opts)
 			end,
 		},
 	})
+
 	if setup_called and not opts.executable_path then
 		vim.notify("Setup already called, skipping", vim.log.levels.WARN)
 		return
