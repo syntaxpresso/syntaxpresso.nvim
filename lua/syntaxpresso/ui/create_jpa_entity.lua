@@ -2,7 +2,6 @@ local n = require("nui-components")
 local text = require("syntaxpresso.ui.components.text")
 local text_input = require("syntaxpresso.ui.components.text_input")
 local command_runner = require("syntaxpresso.utils.command_runner")
-local select_one = require("syntaxpresso.ui.components.select_one")
 
 local M = {}
 
@@ -42,10 +41,14 @@ end
 
 local function process_data(data)
 	local packages_list = {}
-	local root_package = data.rootPackageName or ""
+	local root_package = data.rootPackageName
 	if data.packages then
 		for _, pkg in ipairs(data.packages) do
-			table.insert(packages_list, n.node({ text = pkg.packageName, is_done = true, id = pkg.packageName }))
+			if pkg.packageName == root_package then
+				table.insert(packages_list, n.node({ text = pkg.packageName, is_done = true, id = pkg.packageName }))
+			else
+				table.insert(packages_list, n.node({ text = pkg.packageName, is_done = false, id = pkg.packageName }))
+			end
 		end
 	end
 	signal.package_name = root_package
@@ -54,6 +57,8 @@ end
 
 function M.render_create_jpa_entity_ui(data)
 	process_data(data.data)
+	-- Create a table to hold the tree component reference
+	local existing_packages_tree = {}
 	local component = n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "Create new JPA Entity" }),
@@ -64,18 +69,35 @@ function M.render_create_jpa_entity_ui(data)
 			autofocus = true,
 			size = 1,
 		}),
-		select_one.render_component({
-			label = "Packages",
+		n.select({
+			border_label = "Existing packages",
+			selected = signal.package_name,
 			data = signal.package_list,
-			signal = signal,
-			signal_key = "package_name",
+			multiselect = false,
 			size = 5,
+			on_select = function(selected, component)
+				signal["package_name"] = selected.id
+				existing_packages_tree = component:get_tree()
+			end,
 		}),
 		text_input.render_component({
 			title = "Package name",
 			signal = signal,
 			signal_key = "package_name",
 			size = 1,
+			on_change_callback = function(_)
+				if existing_packages_tree then
+					vim.schedule(function()
+						if existing_packages_tree then
+							local nodes = existing_packages_tree:get_nodes()
+							for _, node in ipairs(nodes) do
+								node.is_done = false
+							end
+							existing_packages_tree:render()
+						end
+					end)
+				end
+			end,
 		}),
 		n.columns({ flex = 0 }, render_confirm_button())
 	)
