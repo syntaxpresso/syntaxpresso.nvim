@@ -4,6 +4,7 @@ local installer = require("syntaxpresso.installer")
 local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
 local command_runner = require("syntaxpresso.utils.command_runner")
 local get_all_packages = require("syntaxpresso.commands.get_all_packages")
+local get_all_superclasses = require("syntaxpresso.commands.get_all_superclasses")
 
 local M = {}
 
@@ -38,16 +39,43 @@ function M.setup(opts)
 					{
 						title = "Create JPA entity",
 						action = function()
+							local results = {
+								packages = nil,
+								superclasses = nil,
+							}
+							local completed = 0
+							local total = 2
+							local has_error = false
+							local function check_and_render()
+								completed = completed + 1
+								if completed == total and not has_error then
+									if results.packages and results.superclasses then
+										vim.schedule(function()
+											create_jpa_entity.render_create_jpa_entity_ui({
+												packages = results.packages,
+												superclasses = results.superclasses,
+											})
+										end)
+									end
+								end
+							end
 							get_all_packages.get_all_packages_simple(function(response, error)
 								if error then
+									has_error = true
 									vim.notify("Failed to get packages: " .. error, vim.log.levels.WARN)
 									return
 								end
-								if response and response.data then
-									vim.schedule(function()
-										create_jpa_entity.render_create_jpa_entity_ui(response)
-									end)
+								results.packages = response
+								check_and_render()
+							end)
+							get_all_superclasses.get_all_superclasses_simple(function(response, error)
+								if error then
+									has_error = true
+									vim.notify("Failed to get superclasses: " .. error, vim.log.levels.WARN)
+									return
 								end
+								results.superclasses = response
+								check_and_render()
 							end)
 						end,
 					},

@@ -2,15 +2,25 @@ local n = require("nui-components")
 local text = require("syntaxpresso.ui.components.text")
 local text_input = require("syntaxpresso.ui.components.text_input")
 local command_runner = require("syntaxpresso.utils.command_runner")
+local select_one = require("syntaxpresso.ui.components.select_one")
 
 local M = {}
 
-local renderer = n.create_renderer({ height = 7 })
+local renderer = n.create_renderer({
+	height = 7,
+	position = {
+		row = "30%",
+		col = "50%",
+	},
+})
 
 local signal = n.create_signal({
 	file_name = "NewEntity",
 	package_name = "",
 	package_list = {},
+	superclass_name = "",
+	superclass_package_name = "",
+	superclass_list = "None",
 })
 
 local function render_confirm_button()
@@ -24,6 +34,8 @@ local function render_confirm_button()
 				cwd = vim.fn.getcwd(),
 				["package-name"] = signal.package_name:get_value(),
 				["file-name"] = signal.file_name:get_value(),
+				["superclass-type"] = signal.superclass_name:get_value(),
+				["superclass-package-name"] = signal.superclass_package_name:get_value(),
 			}
 			command_runner.execute("create-jpa-entity", result, function(response, error)
 				if error then
@@ -41,22 +53,59 @@ end
 
 local function process_data(data)
 	local packages_list = {}
-	local root_package = data.rootPackageName
-	if data.packages then
-		for _, pkg in ipairs(data.packages) do
-			if pkg.packageName == root_package then
-				table.insert(packages_list, n.node({ text = pkg.packageName, is_done = true, id = pkg.packageName }))
-			else
-				table.insert(packages_list, n.node({ text = pkg.packageName, is_done = false, id = pkg.packageName }))
+	local superclasses_list = {}
+	-- Process packages
+	if data.packages and data.packages.data then
+		local root_package = data.packages.data.rootPackageName
+		if data.packages.data.packages then
+			for _, pkg in ipairs(data.packages.data.packages) do
+				if pkg.packageName == root_package then
+					table.insert(
+						packages_list,
+						n.node({ id = pkg.packageName, text = pkg.packageName, is_done = true })
+					)
+				else
+					table.insert(
+						packages_list,
+						n.node({ id = pkg.packageName, text = pkg.packageName, is_done = false })
+					)
+				end
 			end
 		end
+		signal.package_name = root_package
 	end
-	signal.package_name = root_package
+	-- Process superclasses
+	if data.superclasses and data.superclasses.data and data.superclasses.data.files then
+		table.insert(
+			superclasses_list,
+			n.node({
+				id = "none",
+				text = "None",
+				package_name = "",
+				is_done = true,
+			})
+		)
+		for _, file in ipairs(data.superclasses.data.files) do
+			-- Extract class name from file path
+			local superclass_name = file.fileType
+			local superclass_package_name = file.filePackageName
+			table.insert(
+				superclasses_list,
+				n.node({
+					id = superclass_name,
+					text = superclass_name .. " (" .. superclass_package_name .. " )",
+					package_name = superclass_package_name,
+					is_done = false,
+				})
+			)
+		end
+	end
 	signal.package_list = packages_list
+	signal.superclass_list = superclasses_list
 end
 
 function M.render_create_jpa_entity_ui(data)
-	process_data(data.data)
+	process_data(data)
 	-- Create a table to hold the tree component reference
 	local existing_packages_tree = {}
 	local component = n.rows(
@@ -97,6 +146,16 @@ function M.render_create_jpa_entity_ui(data)
 						end
 					end)
 				end
+			end,
+		}),
+		select_one.render_component({
+			label = "Mapped superclass",
+			data = signal.superclass_list,
+			signal = signal,
+			signal_key = "superclass_name",
+			size = 5,
+			on_select_callback = function(node, _)
+				signal["superclass_package_name"] = node.package_name
 			end,
 		}),
 		n.columns({ flex = 0 }, render_confirm_button())

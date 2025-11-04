@@ -18,7 +18,7 @@ function M.get_all_superclasses(cwd, callback, options)
 		cwd = actual_cwd,
 	}
 	-- Execute command
-	command_runner.execute("get-all-superclasses", args, callback, options)
+	command_runner.execute("get-all-jpa-mapped-superclasses", args, callback, options)
 end
 
 ---Simplified version that gets all superclasses from current directory
