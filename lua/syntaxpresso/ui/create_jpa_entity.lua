@@ -18,8 +18,8 @@ local signal = n.create_signal({
 	file_name = "NewEntity",
 	package_name = "",
 	package_list = {},
-	superclass_name = "",
-	superclass_package_name = "",
+	superclass_name = nil,
+	superclass_package_name = nil,
 	superclass_list = "None",
 })
 
@@ -34,9 +34,13 @@ local function render_confirm_button()
 				cwd = vim.fn.getcwd(),
 				["package-name"] = signal.package_name:get_value(),
 				["file-name"] = signal.file_name:get_value(),
-				["superclass-type"] = signal.superclass_name:get_value(),
-				["superclass-package-name"] = signal.superclass_package_name:get_value(),
 			}
+			local superclass_type = signal.superclass_name:get_value()
+			local superclass_package = signal.superclass_package_name:get_value()
+			if superclass_type ~= nil and superclass_package ~= nil then
+				result["superclass-type"] = superclass_type
+				result["superclass-package-name"] = superclass_package
+			end
 			command_runner.execute("create-jpa-entity", result, function(response, error)
 				if error then
 					vim.notify("Failed to create entity: " .. error, vim.log.levels.ERROR)
@@ -79,9 +83,9 @@ local function process_data(data)
 		table.insert(
 			superclasses_list,
 			n.node({
-				id = "none",
+				id = nil,
 				text = "None",
-				package_name = "",
+				package_name = nil,
 				is_done = true,
 			})
 		)
@@ -154,8 +158,8 @@ function M.render_create_jpa_entity_ui(data)
 			signal = signal,
 			signal_key = "superclass_name",
 			size = 5,
-			on_select_callback = function(node, _)
-				signal["superclass_package_name"] = node.package_name
+			on_select_callback = function(_, node, _)
+				signal.superclass_package_name = node.package_name
 			end,
 		}),
 		n.columns({ flex = 0 }, render_confirm_button())
