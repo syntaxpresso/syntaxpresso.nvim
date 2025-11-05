@@ -2,6 +2,7 @@
 
 local installer = require("syntaxpresso.installer")
 local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
+local create_java_file = require("syntaxpresso.ui.create_java_file")
 local command_runner = require("syntaxpresso.utils.command_runner")
 local get_all_packages = require("syntaxpresso.commands.get_all_packages")
 local get_all_superclasses = require("syntaxpresso.commands.get_all_superclasses")
@@ -36,6 +37,23 @@ function M.setup(opts)
 					return {}
 				end
 				return {
+					{
+						title = "Create Java file",
+						action = function()
+							get_all_packages.get_all_packages_simple(function(response, error)
+								if error then
+									vim.notify("Failed to get packages: " .. error, vim.log.levels.WARN)
+									return
+								end
+								local results = {
+									packages = response,
+								}
+								vim.schedule(function()
+									create_java_file.render_create_java_file_ui(results)
+								end)
+							end)
+						end,
+					},
 					{
 						title = "Create JPA entity",
 						action = function()
