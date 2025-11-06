@@ -46,6 +46,9 @@ local function render_confirm_button()
 					vim.notify("Failed to create file: " .. error, vim.log.levels.ERROR)
 				elseif response and response.succeed then
 					vim.notify("Entity created successfully!", vim.log.levels.INFO)
+					vim.schedule(function()
+						vim.cmd("edit " .. response.data.filePath)
+					end)
 				else
 					vim.notify("Entity creation completed", vim.log.levels.INFO)
 				end
