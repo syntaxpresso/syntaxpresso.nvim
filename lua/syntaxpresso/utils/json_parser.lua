@@ -37,10 +37,14 @@ local M = {}
 ---@class PackageResponse
 ---@field packageName string
 
----@class GetPackagesResponse
----@field packages PackageResponse[]
----@field packagesCount integer
----@field rootPackageName string|nil
+---@class BasicJavaType
+---@field id string
+---@field name string
+---@field packagePath string
+---@field type_ string
+
+---@class CreateNewFileResponse
+---@field filePath string
 
 ---@class CreateJPAOneToOneRelationshipResponse
 ---@field success boolean
