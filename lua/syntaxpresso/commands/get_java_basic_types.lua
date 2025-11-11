@@ -2,17 +2,17 @@ local command_runner = require("syntaxpresso.utils.command_runner")
 
 local M = {}
 
----Get Java basic types based on field type kind (legacy method for backward compatibility)
+---Get Java basic types based on basic type kind (legacy method for backward compatibility)
 ---@param java_executable string Path to the Java executable
----@param field_type_kind string Either "all" or "id"
+---@param basic_type_kind string Type of basic types to retrieve (e.g., "all-types", "id-types", "types-with-length", etc.)
 ---@param callback function Callback function that receives array of BasicJavaType or nil
-function M.get_java_basic_types(java_executable, field_type_kind, callback)
+function M.get_java_basic_types(java_executable, basic_type_kind, callback)
 	-- This legacy function is maintained for backward compatibility
 	-- It doesn't use the response/error pattern, so we adapt it
 	local cwd = vim.fn.getcwd()
 	local args = {
 		cwd = cwd,
-		["field-type-kind"] = field_type_kind,
+		["basic-type-kind"] = basic_type_kind,
 	}
 
 	command_runner.execute("get-java-basic-types", args, function(response, error)
@@ -31,12 +31,12 @@ function M.get_java_basic_types(java_executable, field_type_kind, callback)
 	end)
 end
 
----Get Java basic types from current directory with specified field type kind
+---Get Java basic types from current directory with specified basic type kind
 ---@param cwd string|nil The working directory path (defaults to current working directory)
----@param field_type_kind string Either "all" or "id"
+---@param basic_type_kind string Type of basic types to retrieve (e.g., "all-types", "id-types", "types-with-length", "types-with-time-zone-storage", "types-with-temporal", "types-with-extra-other", "types-with-precision-and-scale")
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
 ---@param options table|nil Optional settings
-function M.get_java_basic_types_modern(cwd, field_type_kind, callback, options)
+function M.get_java_basic_types_modern(cwd, basic_type_kind, callback, options)
 	-- Set default values
 	local actual_cwd = cwd or vim.fn.getcwd()
 
@@ -45,17 +45,28 @@ function M.get_java_basic_types_modern(cwd, field_type_kind, callback, options)
 		error("Callback function is required")
 	end
 
-	-- Validate field_type_kind
-	local valid_kinds = { all = true, id = true }
-	if not field_type_kind or not valid_kinds[field_type_kind] then
-		callback(nil, "Invalid field type kind. Must be either 'all' or 'id'")
+	-- Validate basic_type_kind
+	local valid_kinds = {
+		["all-types"] = true,
+		["id-types"] = true,
+		["types-with-length"] = true,
+		["types-with-time-zone-storage"] = true,
+		["types-with-temporal"] = true,
+		["types-with-extra-other"] = true,
+		["types-with-precision-and-scale"] = true,
+	}
+	if not basic_type_kind or not valid_kinds[basic_type_kind] then
+		callback(
+			nil,
+			"Invalid basic type kind. Must be one of: 'all-types', 'id-types', 'types-with-length', 'types-with-time-zone-storage', 'types-with-temporal', 'types-with-extra-other', 'types-with-precision-and-scale'"
+		)
 		return
 	end
 
 	-- Build arguments
 	local args = {
 		cwd = actual_cwd,
-		["field-type-kind"] = field_type_kind,
+		["basic-type-kind"] = basic_type_kind,
 	}
 
 	-- Execute command
@@ -63,10 +74,10 @@ function M.get_java_basic_types_modern(cwd, field_type_kind, callback, options)
 end
 
 ---Simplified version that gets Java basic types from current directory
----@param field_type_kind string Either "all" or "id"
+---@param basic_type_kind string Type of basic types to retrieve (e.g., "all-types", "id-types", "types-with-length", etc.)
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
-function M.get_java_basic_types_simple(field_type_kind, callback)
-	M.get_java_basic_types_modern(nil, field_type_kind, callback, nil)
+function M.get_java_basic_types_simple(basic_type_kind, callback)
+	M.get_java_basic_types_modern(nil, basic_type_kind, callback, nil)
 end
 
 return M
