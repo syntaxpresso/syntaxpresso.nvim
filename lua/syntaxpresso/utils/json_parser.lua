@@ -40,8 +40,7 @@ local M = {}
 ---@class BasicJavaType
 ---@field id string
 ---@field name string
----@field packagePath string
----@field type_ string
+---@field packagePath string|nil
 
 ---@class CreateNewFileResponse
 ---@field filePath string
