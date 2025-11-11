@@ -8,6 +8,7 @@ local get_all_packages = require("syntaxpresso.commands.get_all_packages")
 local get_java_files = require("syntaxpresso.commands.get_java_files")
 local get_java_basic_types = require("syntaxpresso.commands.get_java_basic_types")
 local get_all_superclasses = require("syntaxpresso.commands.get_all_superclasses")
+local get_jpa_entity_info = require("syntaxpresso.commands.get_jpa_entity_info")
 
 local M = {}
 
@@ -107,19 +108,26 @@ function M.setup(opts)
 								basic_types = nil,
 								id_types = nil,
 								enum_files = nil,
+								entity_info = nil,
 							}
 							local completed = 0
-							local total = 3
+							local total = 4
 							local has_error = false
 							local function check_and_render()
 								completed = completed + 1
 								if completed == total and not has_error then
-									if results.basic_types and results.id_types and results.enum_files then
+									if
+										results.basic_types
+										and results.id_types
+										and results.enum_files
+										and results.entity_info
+									then
 										vim.schedule(function()
 											create_jpa_entity.render_create_jpa_entity_ui({
 												basic_types = results.basic_types,
 												id_types = results.id_types,
 												enum_files = results.enum_files,
+												entity_info = results.entity_info,
 											})
 										end)
 									end
@@ -150,6 +158,15 @@ function M.setup(opts)
 									return
 								end
 								results.enum_files = response
+								check_and_render()
+							end)
+							get_jpa_entity_info.get_jpa_entity_info_from_buffer(function(response, error)
+								if error then
+									has_error = true
+									vim.notify("Failed to get entity info: " .. error, vim.log.levels.WARN)
+									return
+								end
+								results.entity_info = response
 								check_and_render()
 							end)
 						end,
