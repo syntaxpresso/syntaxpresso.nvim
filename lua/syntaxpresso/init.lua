@@ -5,6 +5,8 @@ local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
 local create_java_file = require("syntaxpresso.ui.create_java_file")
 local command_runner = require("syntaxpresso.utils.command_runner")
 local get_all_packages = require("syntaxpresso.commands.get_all_packages")
+local get_java_files = require("syntaxpresso.commands.get_java_files")
+local get_java_basic_types = require("syntaxpresso.commands.get_java_basic_types")
 local get_all_superclasses = require("syntaxpresso.commands.get_all_superclasses")
 
 local M = {}
@@ -55,7 +57,7 @@ function M.setup(opts)
 						end,
 					},
 					{
-						title = "Create JPA entity",
+						title = "Create JPA Entity",
 						action = function()
 							local results = {
 								packages = nil,
@@ -93,6 +95,61 @@ function M.setup(opts)
 									return
 								end
 								results.superclasses = response
+								check_and_render()
+							end)
+						end,
+					},
+					{
+						title = "Create JPA Entity field",
+						action = function()
+							local exec = get_executable()
+							local results = {
+								basic_types = nil,
+								id_types = nil,
+								enum_files = nil,
+							}
+							local completed = 0
+							local total = 3
+							local has_error = false
+							local function check_and_render()
+								completed = completed + 1
+								if completed == total and not has_error then
+									if results.basic_types and results.id_types and results.enum_files then
+										vim.schedule(function()
+											create_jpa_entity.render_create_jpa_entity_ui({
+												basic_types = results.basic_types,
+												id_types = results.id_types,
+												enum_files = results.enum_files,
+											})
+										end)
+									end
+								end
+							end
+							get_java_basic_types.get_java_basic_types(exec, "all", function(response)
+								if not response then
+									has_error = true
+									vim.notify("Failed to get basic types", vim.log.levels.WARN)
+									return
+								end
+								results.basic_types = response
+								check_and_render()
+							end)
+							get_java_basic_types.get_java_basic_types(exec, "id", function(response)
+								if not response then
+									has_error = true
+									vim.notify("Failed to get id types", vim.log.levels.WARN)
+									return
+								end
+								results.id_types = response
+								check_and_render()
+							end)
+							get_java_files.get_java_files_simple("enum", function(response, error)
+								if error then
+									has_error = true
+									vim.notify("Failed to get enum files: " .. error, vim.log.levels.WARN)
+									return
+								end
+								results.enum_files = response
 								check_and_render()
 							end)
 						end,

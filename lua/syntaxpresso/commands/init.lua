@@ -5,6 +5,7 @@ local create_entity_field = require("syntaxpresso.commands.create_entity_field")
 local get_info = require("syntaxpresso.commands.get_info")
 local get_main_class = require("syntaxpresso.commands.get_main_class")
 local get_java_basic_types = require("syntaxpresso.commands.get_java_basic_types")
+local get_java_files = require("syntaxpresso.commands.get_java_files")
 local rename = require("syntaxpresso.commands.rename")
 
 local M = {}
@@ -16,6 +17,7 @@ M.create_entity_field = create_entity_field
 M.get_info = get_info
 M.get_main_class = get_main_class
 M.get_java_basic_types = get_java_basic_types
+M.get_java_files = get_java_files
 M.rename = rename
 
 return M
