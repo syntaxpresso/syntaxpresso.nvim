@@ -6,6 +6,7 @@ local get_info = require("syntaxpresso.commands.get_info")
 local get_main_class = require("syntaxpresso.commands.get_main_class")
 local get_java_basic_types = require("syntaxpresso.commands.get_java_basic_types")
 local get_java_files = require("syntaxpresso.commands.get_java_files")
+local get_jpa_entity_info = require("syntaxpresso.commands.get_jpa_entity_info")
 local rename = require("syntaxpresso.commands.rename")
 
 local M = {}
@@ -18,6 +19,7 @@ M.get_info = get_info
 M.get_main_class = get_main_class
 M.get_java_basic_types = get_java_basic_types
 M.get_java_files = get_java_files
+M.get_jpa_entity_info = get_jpa_entity_info
 M.rename = rename
 
 return M
