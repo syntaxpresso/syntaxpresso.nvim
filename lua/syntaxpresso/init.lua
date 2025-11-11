@@ -3,6 +3,7 @@
 local installer = require("syntaxpresso.installer")
 local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
 local create_java_file = require("syntaxpresso.ui.create_java_file")
+local create_entity_field = require("syntaxpresso.ui.create_entity_field")
 local command_runner = require("syntaxpresso.utils.command_runner")
 local get_all_packages = require("syntaxpresso.commands.get_all_packages")
 local get_java_files = require("syntaxpresso.commands.get_java_files")
@@ -107,11 +108,16 @@ function M.setup(opts)
 							local results = {
 								basic_types = nil,
 								id_types = nil,
+								types_with_length = nil,
+								types_with_time_zone_storage = nil,
+								types_with_temporal = nil,
+								types_with_extra_other = nil,
+								types_with_precision_and_scale = nil,
 								enum_files = nil,
 								entity_info = nil,
 							}
 							local completed = 0
-							local total = 4
+							local total = 9
 							local has_error = false
 							local function check_and_render()
 								completed = completed + 1
@@ -119,13 +125,23 @@ function M.setup(opts)
 									if
 										results.basic_types
 										and results.id_types
+										and results.types_with_length
+										and results.types_with_time_zone_storage
+										and results.types_with_temporal
+										and results.types_with_extra_other
+										and results.types_with_precision_and_scale
 										and results.enum_files
 										and results.entity_info
 									then
 										vim.schedule(function()
-											create_jpa_entity.render_create_jpa_entity_ui({
+											create_entity_field.render({
 												basic_types = results.basic_types,
 												id_types = results.id_types,
+												types_with_length = results.types_with_length,
+												types_with_time_zone_storage = results.types_with_time_zone_storage,
+												types_with_temporal = results.types_with_temporal,
+												types_with_extra_other = results.types_with_extra_other,
+												types_with_precision_and_scale = results.types_with_precision_and_scale,
 												enum_files = results.enum_files,
 												entity_info = results.entity_info,
 											})
@@ -133,7 +149,7 @@ function M.setup(opts)
 									end
 								end
 							end
-							get_java_basic_types.get_java_basic_types(exec, "all", function(response)
+							get_java_basic_types.get_java_basic_types(exec, "all-types", function(response)
 								if not response then
 									has_error = true
 									vim.notify("Failed to get basic types", vim.log.levels.WARN)
@@ -142,7 +158,7 @@ function M.setup(opts)
 								results.basic_types = response
 								check_and_render()
 							end)
-							get_java_basic_types.get_java_basic_types(exec, "id", function(response)
+							get_java_basic_types.get_java_basic_types(exec, "id-types", function(response)
 								if not response then
 									has_error = true
 									vim.notify("Failed to get id types", vim.log.levels.WARN)
@@ -151,6 +167,59 @@ function M.setup(opts)
 								results.id_types = response
 								check_and_render()
 							end)
+							get_java_basic_types.get_java_basic_types(exec, "types-with-length", function(response)
+								if not response then
+									has_error = true
+									vim.notify("Failed to get types with length", vim.log.levels.WARN)
+									return
+								end
+								results.types_with_length = response
+								check_and_render()
+							end)
+							get_java_basic_types.get_java_basic_types(
+								exec,
+								"types-with-time-zone-storage",
+								function(response)
+									if not response then
+										has_error = true
+										vim.notify("Failed to get types with time zone storage", vim.log.levels.WARN)
+										return
+									end
+									results.types_with_time_zone_storage = response
+									check_and_render()
+								end
+							)
+							get_java_basic_types.get_java_basic_types(exec, "types-with-temporal", function(response)
+								if not response then
+									has_error = true
+									vim.notify("Failed to get types with temporal", vim.log.levels.WARN)
+									return
+								end
+								results.types_with_temporal = response
+								check_and_render()
+							end)
+							get_java_basic_types.get_java_basic_types(exec, "types-with-extra-other", function(response)
+								if not response then
+									has_error = true
+									vim.notify("Failed to get types with extra other", vim.log.levels.WARN)
+									return
+								end
+								results.types_with_extra_other = response
+								check_and_render()
+							end)
+							get_java_basic_types.get_java_basic_types(
+								exec,
+								"types-with-precision-and-scale",
+								function(response)
+									if not response then
+										has_error = true
+										vim.notify("Failed to get types with precision and scale", vim.log.levels.WARN)
+										return
+									end
+									results.types_with_precision_and_scale = response
+									check_and_render()
+								end
+							)
 							get_java_files.get_java_files_simple("enum", function(response, error)
 								if error then
 									has_error = true
