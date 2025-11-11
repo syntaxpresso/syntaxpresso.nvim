@@ -11,31 +11,31 @@ local M = {}
 function M.get_jpa_entity_info(cwd, entity_file_path, b64_source_code, callback, options)
 	-- Set default values
 	local actual_cwd = cwd or vim.fn.getcwd()
-	
+
 	-- Validate callback
 	if not callback or type(callback) ~= "function" then
 		error("Callback function is required")
 	end
-	
+
 	-- Validate that at least one of entity_file_path or b64_source_code is provided
 	if not entity_file_path and not b64_source_code then
 		callback(nil, "Either entity_file_path or b64_source_code must be provided")
 		return
 	end
-	
+
 	-- Build arguments
 	local args = {
 		cwd = actual_cwd,
 	}
-	
+
 	if entity_file_path then
 		args["entity-file-path"] = entity_file_path
 	end
-	
+
 	if b64_source_code then
 		args["b64-source-code"] = b64_source_code
 	end
-	
+
 	-- Execute command
 	command_runner.execute("get-jpa-entity-info", args, callback, options)
 end
@@ -61,10 +61,10 @@ function M.get_jpa_entity_info_from_buffer(callback)
 	local bufnr = vim.api.nvim_get_current_buf()
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	local source_code = table.concat(lines, "\n")
-	
+
 	-- Encode to base64
 	local b64_source_code = vim.base64.encode(source_code)
-	
+
 	M.get_jpa_entity_info(nil, nil, b64_source_code, callback, nil)
 end
 
