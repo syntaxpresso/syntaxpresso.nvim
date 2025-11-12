@@ -104,6 +104,7 @@ function M.setup(opts)
 					{
 						title = "Create JPA Entity field",
 						action = function()
+							-- Capture entity file context before opening UI
 							local exec = get_executable()
 							local results = {
 								basic_types = nil,

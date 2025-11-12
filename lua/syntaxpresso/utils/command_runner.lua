@@ -31,30 +31,38 @@ local function build_args_from_table(tbl)
 
 	for key, value in pairs(tbl) do
 		if value ~= nil then
-			local arg_value = value
-
-			-- Handle special encoding options
-			if type(value) == "table" and value.value then
-				arg_value = value.value
-				if value.encode == "base64" then
-					arg_value = vim.base64.encode(tostring(arg_value))
-				elseif value.encode == "url" then
-					-- Simple URL encoding for spaces and special chars
-					arg_value = tostring(arg_value):gsub("([^%w%-%.%_%~])", function(c)
-						return string.format("%%%02X", string.byte(c))
-					end)
+			-- Handle boolean flags (just --flag without value)
+			if type(value) == "boolean" then
+				if value == true then
+					table.insert(parts, "--" .. key)
 				end
+				-- Skip false boolean values (don't add the flag)
+			else
+				local arg_value = value
+
+				-- Handle special encoding options
+				if type(value) == "table" and value.value then
+					arg_value = value.value
+					if value.encode == "base64" then
+						arg_value = vim.base64.encode(tostring(arg_value))
+					elseif value.encode == "url" then
+						-- Simple URL encoding for spaces and special chars
+						arg_value = tostring(arg_value):gsub("([^%w%-%.%_%~])", function(c)
+							return string.format("%%%02X", string.byte(c))
+						end)
+					end
+				end
+
+				-- Convert value to string
+				local str_value = tostring(arg_value)
+
+				-- Handle spaces and special characters by quoting
+				if str_value:find("%s") or str_value:find("[\"'\\]") then
+					str_value = '"' .. str_value:gsub('"', '\\"') .. '"'
+				end
+
+				table.insert(parts, "--" .. key .. "=" .. str_value)
 			end
-
-			-- Convert value to string
-			local str_value = tostring(arg_value)
-
-			-- Handle spaces and special characters by quoting
-			if str_value:find("%s") or str_value:find("[\"'\\]") then
-				str_value = '"' .. str_value:gsub('"', '\\"') .. '"'
-			end
-
-			table.insert(parts, "--" .. key .. "=" .. str_value)
 		end
 	end
 
