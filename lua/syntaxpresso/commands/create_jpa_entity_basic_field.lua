@@ -50,15 +50,11 @@ end
 ---@param field_config table Field configuration from UI
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
 ---@param options table|nil Optional settings
-function M.create_jpa_entity_basic_field(field_config, callback, options)
+function M.create_jpa_entity_basic_field(cwd, entity_file_path, field_config, callback, options)
 	-- Validate required parameters
 	if not callback or type(callback) ~= "function" then
 		error("Callback function is required")
 	end
-
-	-- Capture current buffer's file path and working directory
-	local entity_file_path = vim.api.nvim_buf_get_name(0)
-	local cwd = vim.fn.getcwd()
 
 	if not entity_file_path or entity_file_path == "" then
 		callback(nil, "Entity file path is required")

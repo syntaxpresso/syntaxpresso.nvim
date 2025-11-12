@@ -84,19 +84,18 @@ local function process_type_data(type_data)
 		is_done = false
 	end
 	for _, v in ipairs(type_data.types_with_length) do
-		table.insert(types_with_length, v.id)
+		types_with_length[v.id] = true
 	end
 	for _, v in ipairs(type_data.types_with_extra_other) do
-		table.insert(types_with_extra_other, v.id)
+		types_with_extra_other[v.id] = true
 	end
 	for _, v in ipairs(type_data.types_with_precision_and_scale) do
-		table.insert(types_with_precision_and_scale, v.id)
+		types_with_precision_and_scale[v.id] = true
 	end
 	for _, v in ipairs(type_data.types_with_temporal) do
-		table.insert(types_with_temporal, v.id)
+		types_with_temporal[v.id] = true
 	end
 	for _, v in ipairs(type_data.types_with_time_zone_storage) do
-		table.insert(types_with_time_zone_storage, v.id)
 		types_with_time_zone_storage[v.id] = true
 	end
 	signal.all_types = all_types
@@ -177,29 +176,29 @@ local function render_component(_previous_button_fn)
 			on_select_callback = function(_, node, _)
 				signal.field_package_path = node.package_path
 				signal.field_type = node.name
-				if signal.types_with_length[node.id] then
+				if signal.types_with_length:get_value()[node.id] then
 					signal.field_length_hidden = false
 				else
 					signal.field_length_hidden = true
 				end
-				if signal.types_with_time_zone_storage[node.id] then
+				if signal.types_with_time_zone_storage:get_value()[node.id] then
 					signal.field_time_zone_storage_hidden = false
 				else
 					signal.field_time_zone_storage_hidden = true
 				end
-				if signal.types_with_temporal[node.id] then
+				if signal.types_with_temporal:get_value()[node.id] then
 					signal.field_temporal_hidden = false
 				else
 					signal.field_temporal_hidden = true
 				end
-				if signal.types_with_extra_other[node.id] then
+				if signal.types_with_extra_other:get_value()[node.id] then
 					signal.other_hidden = true
 					signal.other_extra_hidden = false
 				else
 					signal.other_hidden = false
 					signal.other_extra_hidden = true
 				end
-				if signal.types_with_precision_and_scale[node.id] then
+				if signal.types_with_precision_and_scale:get_value()[node.id] then
 					signal.field_scale_hidden = false
 					signal.field_precision_hidden = false
 				else
