@@ -70,6 +70,8 @@ local function render_next_button(_signal)
 			renderer:close()
 			if _signal.field_category:get_value() == "basic" then
 				basic_field.render(create_previous_button, {
+					cwd = data_sources.cwd,
+					entity_file_path = data_sources.entity_file_path,
 					basic_types = data_sources.basic_types,
 					types_with_length = data_sources.types_with_length,
 					types_with_time_zone_storage = data_sources.types_with_time_zone_storage,
@@ -109,13 +111,13 @@ end
 
 function M.render(_data_sources)
 	data_sources = _data_sources
-	
+
 	-- Reset signal state to initial values
 	signal.field_category = "basic"
 	signal.next_button_hidden = false
 	signal.previous_button_hidden = true
 	signal.confirm_button_hidden = true
-	
+
 	renderer:render(M.CreateEntityFieldComponent(signal))
 end
 

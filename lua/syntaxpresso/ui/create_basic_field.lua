@@ -106,7 +106,7 @@ local function process_type_data(type_data)
 	signal.types_with_time_zone_storage = types_with_time_zone_storage
 end
 
-local function render_confirm_button()
+local function render_confirm_button(cwd, entity_file_path)
 	return n.button({
 		flex = 1,
 		label = "Confirm",
@@ -141,26 +141,32 @@ local function render_confirm_button()
 			renderer:close()
 
 			-- Call command with callback (entity context captured inside the command)
-			create_jpa_entity_basic_field.create_jpa_entity_basic_field(field_config, function(response, error)
-				if error then
-					vim.notify("Failed to create field: " .. error, vim.log.levels.ERROR)
-					return
-				end
+			create_jpa_entity_basic_field.create_jpa_entity_basic_field(
+				cwd,
+				entity_file_path,
+				field_config,
+				function(response, error)
+					if error then
+						vim.notify("Failed to create field: " .. error, vim.log.levels.ERROR)
+						return
+					end
 
-				if response then
-					vim.notify("Field created successfully!", vim.log.levels.INFO)
-					-- Reload buffer to show changes (use vim.schedule to avoid fast event context error)
-					vim.schedule(function()
-						vim.cmd("checktime")
-					end)
-				end
-			end, nil)
+					if response then
+						vim.notify("Field created successfully!", vim.log.levels.INFO)
+						-- Reload buffer to show changes (use vim.schedule to avoid fast event context error)
+						vim.schedule(function()
+							vim.cmd("checktime")
+						end)
+					end
+				end,
+				nil
+			)
 		end,
 		hidden = signal.confirm_btn_hidden,
 	})
 end
 
-local function render_component(_previous_button_fn)
+local function render_component(_previous_button_fn, cwd, entity_file_path)
 	return n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "New Entity field" }),
@@ -268,13 +274,13 @@ local function render_component(_previous_button_fn)
 			signal_hidden_key = "other_extra_hidden",
 		}),
 		n.gap(1),
-		n.columns(_previous_button_fn(renderer), render_confirm_button())
+		n.columns(_previous_button_fn(renderer), render_confirm_button(cwd, entity_file_path))
 	)
 end
 
-function M.render(_previous_button_fn, type_data)
-	process_type_data(type_data)
-	renderer:render(render_component(_previous_button_fn))
+function M.render(_previous_button_fn, data)
+	process_type_data(data)
+	renderer:render(render_component(_previous_button_fn, data.cwd, data.entity_file_path))
 end
 
 return M
