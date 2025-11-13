@@ -1,6 +1,6 @@
 local n = require("nui-components")
 local basic_field = require("syntaxpresso.ui.create_basic_field")
-local enum_field = require("syntaxpresso.ui.enum_field")
+local enum_field = require("syntaxpresso.ui.create_enum_field")
 local id_field = require("syntaxpresso.ui.id_field")
 local select_one = require("syntaxpresso.ui.components.select_one")
 local text = require("syntaxpresso.ui.components.text")
@@ -76,8 +76,8 @@ local function render_next_button(_signal)
 					types_with_extra_other = data_sources.types_with_extra_other,
 					types_with_precision_and_scale = data_sources.types_with_precision_and_scale,
 				})
-			elseif _signal.field_category:get_value() == "enum" then
-				enum_field.render(create_previous_button, data_sources.enum_files)
+		elseif _signal.field_category:get_value() == "enum" then
+			enum_field.render(create_previous_button, data_sources.source_bufnr, data_sources.enum_files)
 			elseif _signal.field_category:get_value() == "id" then
 				id_field.render(create_previous_button, data_sources.id_types, data_sources.entity_info)
 			end
