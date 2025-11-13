@@ -1,4 +1,5 @@
 local command_runner = require("syntaxpresso.utils.command_runner")
+local context = require("syntaxpresso.utils.context")
 
 local M = {}
 
@@ -47,16 +48,20 @@ local function contains(arr, value)
 end
 
 ---Create a JPA entity basic field
+---@param bufnr number The source buffer number containing the entity
 ---@param field_config table Field configuration from UI
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
 ---@param options table|nil Optional settings
-function M.create_jpa_entity_basic_field(cwd, entity_file_b64_src, entity_file_path, field_config, callback, options)
+function M.create_jpa_entity_basic_field(bufnr, field_config, callback, options)
 	-- Validate required parameters
 	if not callback or type(callback) ~= "function" then
 		error("Callback function is required")
 	end
 
-	if not entity_file_path or entity_file_path == "" then
+	-- Get fresh context from the specified buffer
+	local ctx = context.get_buffer_context(bufnr)
+
+	if not ctx.entity_file_path or ctx.entity_file_path == "" then
 		callback(nil, "Entity file path is required")
 		return
 	end
@@ -79,9 +84,9 @@ function M.create_jpa_entity_basic_field(cwd, entity_file_b64_src, entity_file_p
 
 	-- Build arguments
 	local args = {
-		cwd = cwd,
-		["entity-file-b64-src"] = entity_file_b64_src,
-		["entity-file-path"] = entity_file_path,
+		cwd = ctx.cwd,
+		["entity-file-b64-src"] = ctx.entity_file_b64_src,
+		["entity-file-path"] = ctx.entity_file_path,
 		["field-name"] = field_config.field_name,
 		["field-type"] = field_config.field_type,
 	}

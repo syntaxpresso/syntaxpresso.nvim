@@ -19,8 +19,7 @@ local renderer = n.create_renderer({ height = 7 })
 ---@field types_with_precision_and_scale table[]
 ---@field enum_files table[]
 ---@field entity_info table
----@field entity_file_path string
----@field cwd string
+---@field source_bufnr number
 
 ---@type EntityFieldDataSources|nil
 local data_sources = nil
@@ -69,10 +68,7 @@ local function render_next_button(_signal)
 			end
 			renderer:close()
 			if _signal.field_category:get_value() == "basic" then
-				basic_field.render(create_previous_button, {
-					cwd = data_sources.cwd,
-					entity_file_b64_src = data_sources.entity_file_b64_src,
-					entity_file_path = data_sources.entity_file_path,
+				basic_field.render(create_previous_button, data_sources.source_bufnr, {
 					basic_types = data_sources.basic_types,
 					types_with_length = data_sources.types_with_length,
 					types_with_time_zone_storage = data_sources.types_with_time_zone_storage,

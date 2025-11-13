@@ -7,6 +7,9 @@ local create_jpa_entity_basic_field = require("syntaxpresso.commands.create_jpa_
 
 local M = {}
 
+-- Store the source buffer number
+local source_bufnr = nil
+
 local signal = n.create_signal({
 	field_package_path = "java.lang",
 	field_type = "String",
@@ -106,7 +109,7 @@ local function process_type_data(type_data)
 	signal.types_with_time_zone_storage = types_with_time_zone_storage
 end
 
-local function render_confirm_button(cwd, entity_file_b64_src, entity_file_path)
+local function render_confirm_button()
 	return n.button({
 		flex = 1,
 		label = "Confirm",
@@ -140,11 +143,9 @@ local function render_confirm_button(cwd, entity_file_b64_src, entity_file_path)
 			-- Close UI
 			renderer:close()
 
-			-- Call command with callback (entity context captured inside the command)
+			-- Call command with callback (context captured from source buffer)
 			create_jpa_entity_basic_field.create_jpa_entity_basic_field(
-				cwd,
-				entity_file_b64_src,
-				entity_file_path,
+				source_bufnr,
 				field_config,
 				function(response, error)
 					if error then
@@ -167,7 +168,7 @@ local function render_confirm_button(cwd, entity_file_b64_src, entity_file_path)
 	})
 end
 
-local function render_component(_previous_button_fn, cwd, entity_file_b64_src, entity_file_path)
+local function render_component(_previous_button_fn)
 	return n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "New Entity field" }),
@@ -275,13 +276,14 @@ local function render_component(_previous_button_fn, cwd, entity_file_b64_src, e
 			signal_hidden_key = "other_extra_hidden",
 		}),
 		n.gap(1),
-		n.columns(_previous_button_fn(renderer), render_confirm_button(cwd, entity_file_b64_src, entity_file_path))
+		n.columns(_previous_button_fn(renderer), render_confirm_button())
 	)
 end
 
-function M.render(_previous_button_fn, data)
+function M.render(_previous_button_fn, _source_bufnr, data)
+	source_bufnr = _source_bufnr
 	process_type_data(data)
-	renderer:render(render_component(_previous_button_fn, data.cwd, data.entity_file_b64_src, data.entity_file_path))
+	renderer:render(render_component(_previous_button_fn))
 end
 
 return M
