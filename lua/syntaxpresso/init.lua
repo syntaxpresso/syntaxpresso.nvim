@@ -16,10 +16,6 @@ local M = {}
 -- Track if setup has already been called
 local setup_called = false
 
--- Capture current buffer's file path and working directory
-local entity_file_path = vim.api.nvim_buf_get_name(0)
-local cwd = vim.fn.getcwd()
-
 function M.setup(opts)
 	opts = opts or {}
 
@@ -108,7 +104,11 @@ function M.setup(opts)
 					{
 						title = "Create JPA Entity field",
 						action = function()
-							-- Capture entity file context before opening UI
+							-- Capture current buffer's file path and working directory
+							local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+							local entity_file_path = vim.api.nvim_buf_get_name(0)
+							local entity_file_b64_src = vim.base64.encode(table.concat(buffer_lines, "\n"))
+							local cwd = vim.fn.getcwd()
 							local exec = get_executable()
 							local results = {
 								basic_types = nil,
@@ -142,6 +142,7 @@ function M.setup(opts)
 											create_entity_field.render({
 												cwd = cwd,
 												entity_file_path = entity_file_path,
+												entity_file_b64_src = entity_file_b64_src,
 												basic_types = results.basic_types,
 												id_types = results.id_types,
 												types_with_length = results.types_with_length,

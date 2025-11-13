@@ -71,6 +71,7 @@ local function render_next_button(_signal)
 			if _signal.field_category:get_value() == "basic" then
 				basic_field.render(create_previous_button, {
 					cwd = data_sources.cwd,
+					entity_file_b64_src = data_sources.entity_file_b64_src,
 					entity_file_path = data_sources.entity_file_path,
 					basic_types = data_sources.basic_types,
 					types_with_length = data_sources.types_with_length,

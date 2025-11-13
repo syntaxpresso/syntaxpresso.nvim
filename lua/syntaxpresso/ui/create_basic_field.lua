@@ -106,7 +106,7 @@ local function process_type_data(type_data)
 	signal.types_with_time_zone_storage = types_with_time_zone_storage
 end
 
-local function render_confirm_button(cwd, entity_file_path)
+local function render_confirm_button(cwd, entity_file_b64_src, entity_file_path)
 	return n.button({
 		flex = 1,
 		label = "Confirm",
@@ -143,6 +143,7 @@ local function render_confirm_button(cwd, entity_file_path)
 			-- Call command with callback (entity context captured inside the command)
 			create_jpa_entity_basic_field.create_jpa_entity_basic_field(
 				cwd,
+				entity_file_b64_src,
 				entity_file_path,
 				field_config,
 				function(response, error)
@@ -166,7 +167,7 @@ local function render_confirm_button(cwd, entity_file_path)
 	})
 end
 
-local function render_component(_previous_button_fn, cwd, entity_file_path)
+local function render_component(_previous_button_fn, cwd, entity_file_b64_src, entity_file_path)
 	return n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "New Entity field" }),
@@ -274,13 +275,13 @@ local function render_component(_previous_button_fn, cwd, entity_file_path)
 			signal_hidden_key = "other_extra_hidden",
 		}),
 		n.gap(1),
-		n.columns(_previous_button_fn(renderer), render_confirm_button(cwd, entity_file_path))
+		n.columns(_previous_button_fn(renderer), render_confirm_button(cwd, entity_file_b64_src, entity_file_path))
 	)
 end
 
 function M.render(_previous_button_fn, data)
 	process_type_data(data)
-	renderer:render(render_component(_previous_button_fn, data.cwd, data.entity_file_path))
+	renderer:render(render_component(_previous_button_fn, data.cwd, data.entity_file_b64_src, data.entity_file_path))
 end
 
 return M
