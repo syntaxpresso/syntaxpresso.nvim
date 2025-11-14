@@ -116,6 +116,27 @@ local function build_command(command, args)
 	return cmd_parts
 end
 
+---Convert vim.NIL to nil recursively in a table
+---@param tbl table
+---@return table
+local function clean_vim_nil(tbl)
+	if type(tbl) ~= "table" then
+		return tbl
+	end
+
+	local result = {}
+	for k, v in pairs(tbl) do
+		if v == vim.NIL then
+			result[k] = nil
+		elseif type(v) == "table" then
+			result[k] = clean_vim_nil(v)
+		else
+			result[k] = v
+		end
+	end
+	return result
+end
+
 ---Parse JSON response from command output
 ---@param raw_output string Raw command output
 ---@return table|nil response Parsed response object
@@ -136,6 +157,11 @@ local function parse_response(raw_output)
 
 	if not ok then
 		return nil, "Failed to parse JSON: " .. tostring(result)
+	end
+
+	-- Clean vim.NIL values from the response data
+	if result and result.data then
+		result.data = clean_vim_nil(result.data)
 	end
 
 	return result, nil

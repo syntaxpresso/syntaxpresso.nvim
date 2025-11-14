@@ -1,5 +1,3 @@
--- lua/syntaxpresso/init.lua
-
 local installer = require("syntaxpresso.installer")
 local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
 local create_java_file = require("syntaxpresso.ui.create_java_file")
@@ -101,57 +99,57 @@ function M.setup(opts)
 							end)
 						end,
 					},
-				{
-					title = "Create JPA Entity field",
-					action = function()
-						-- Capture the source buffer number before opening UI
-						local source_bufnr = vim.api.nvim_get_current_buf()
-						local exec = get_executable()
-						local results = {
-							basic_types = nil,
-							id_types = nil,
-							types_with_length = nil,
-							types_with_time_zone_storage = nil,
-							types_with_temporal = nil,
-							types_with_extra_other = nil,
-							types_with_precision_and_scale = nil,
-							enum_files = nil,
-							entity_info = nil,
-						}
-						local completed = 0
-						local total = 9
-						local has_error = false
-						local function check_and_render()
-							completed = completed + 1
-							if completed == total and not has_error then
-								if
-									results.basic_types
-									and results.id_types
-									and results.types_with_length
-									and results.types_with_time_zone_storage
-									and results.types_with_temporal
-									and results.types_with_extra_other
-									and results.types_with_precision_and_scale
-									and results.enum_files
-									and results.entity_info
-								then
-									vim.schedule(function()
-										create_entity_field.render({
-											source_bufnr = source_bufnr,
-											basic_types = results.basic_types,
-											id_types = results.id_types,
-											types_with_length = results.types_with_length,
-											types_with_time_zone_storage = results.types_with_time_zone_storage,
-											types_with_temporal = results.types_with_temporal,
-											types_with_extra_other = results.types_with_extra_other,
-											types_with_precision_and_scale = results.types_with_precision_and_scale,
-											enum_files = results.enum_files,
-											entity_info = results.entity_info,
-										})
-									end)
+					{
+						title = "Create JPA Entity field",
+						action = function()
+							-- Capture the source buffer number before opening UI
+							local source_bufnr = vim.api.nvim_get_current_buf()
+							local exec = get_executable()
+							local results = {
+								basic_types = nil,
+								id_types = nil,
+								types_with_length = nil,
+								types_with_time_zone_storage = nil,
+								types_with_temporal = nil,
+								types_with_extra_other = nil,
+								types_with_precision_and_scale = nil,
+								enum_files = nil,
+								entity_info = nil,
+							}
+							local completed = 0
+							local total = 9
+							local has_error = false
+							local function check_and_render()
+								completed = completed + 1
+								if completed == total and not has_error then
+									if
+										results.basic_types
+										and results.id_types
+										and results.types_with_length
+										and results.types_with_time_zone_storage
+										and results.types_with_temporal
+										and results.types_with_extra_other
+										and results.types_with_precision_and_scale
+										and results.enum_files
+										and results.entity_info
+									then
+										vim.schedule(function()
+											create_entity_field.render({
+												source_bufnr = source_bufnr,
+												basic_types = results.basic_types,
+												id_types = results.id_types,
+												types_with_length = results.types_with_length,
+												types_with_time_zone_storage = results.types_with_time_zone_storage,
+												types_with_temporal = results.types_with_temporal,
+												types_with_extra_other = results.types_with_extra_other,
+												types_with_precision_and_scale = results.types_with_precision_and_scale,
+												enum_files = results.enum_files,
+												entity_info = results.entity_info,
+											})
+										end)
+									end
 								end
 							end
-						end
 							get_java_basic_types.get_java_basic_types(exec, "all-types", function(response)
 								if not response then
 									has_error = true
@@ -238,7 +236,7 @@ function M.setup(opts)
 									vim.notify("Failed to get entity info: " .. error, vim.log.levels.WARN)
 									return
 								end
-								results.entity_info = response
+								results.entity_info = response and response.data or nil
 								check_and_render()
 							end)
 						end,

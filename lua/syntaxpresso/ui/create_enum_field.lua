@@ -7,9 +7,6 @@ local create_jpa_entity_enum_field = require("syntaxpresso.commands.create_jpa_e
 
 local M = {}
 
--- Store the source buffer number
-local source_bufnr = nil
-
 local signal = n.create_signal({
 	field_path = nil,
 	field_type = nil,
@@ -115,25 +112,20 @@ local function render_confirm_button()
 			renderer:close()
 
 			-- Call command with callback (context captured from source buffer)
-			create_jpa_entity_enum_field.create_jpa_entity_enum_field(
-				source_bufnr,
-				field_config,
-				function(response, error)
-					if error then
-						vim.notify("Failed to create enum field: " .. error, vim.log.levels.ERROR)
-						return
-					end
+			create_jpa_entity_enum_field.create_jpa_entity_enum_field(field_config, function(response, error)
+				if error then
+					vim.notify("Failed to create enum field: " .. error, vim.log.levels.ERROR)
+					return
+				end
 
-					if response then
-						vim.notify("Enum field created successfully!", vim.log.levels.INFO)
-						-- Reload buffer to show changes (use vim.schedule to avoid fast event context error)
-						vim.schedule(function()
-							vim.cmd("checktime")
-						end)
-					end
-				end,
-				nil
-			)
+				if response then
+					vim.notify("Enum field created successfully!", vim.log.levels.INFO)
+					-- Reload buffer to show changes (use vim.schedule to avoid fast event context error)
+					vim.schedule(function()
+						vim.cmd("checktime")
+					end)
+				end
+			end, nil)
 		end,
 		hidden = signal.confirm_btn_hidden,
 	})
@@ -185,8 +177,7 @@ local function render_component(_previous_button_fn)
 	)
 end
 
-function M.render(_previous_button_fn, _source_bufnr, _enum_files)
-	source_bufnr = _source_bufnr
+function M.render(_previous_button_fn, _enum_files)
 	process_enum_files(_enum_files)
 	renderer:render(render_component(_previous_button_fn))
 end

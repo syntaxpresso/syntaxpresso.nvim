@@ -38,18 +38,17 @@ local function contains(arr, value)
 end
 
 ---Create a JPA entity enum field
----@param bufnr number The source buffer number containing the entity
 ---@param field_config table Field configuration from UI
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
 ---@param options table|nil Optional settings
-function M.create_jpa_entity_enum_field(bufnr, field_config, callback, options)
+function M.create_jpa_entity_enum_field(field_config, callback, options)
 	-- Validate required parameters
 	if not callback or type(callback) ~= "function" then
 		error("Callback function is required")
 	end
 
 	-- Get fresh context from the specified buffer
-	local ctx = context.get_buffer_context(bufnr)
+	local ctx = context.get_buffer_context(0)
 
 	if not ctx.entity_file_path or ctx.entity_file_path == "" then
 		callback(nil, "Entity file path is required")

@@ -57,15 +57,21 @@ end
 ---Get JPA entity info from current buffer
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
 function M.get_jpa_entity_info_from_buffer(callback)
-	-- Get current buffer content
+	-- Get current buffer content and file path
 	local bufnr = vim.api.nvim_get_current_buf()
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	local source_code = table.concat(lines, "\n")
+	local file_path = vim.api.nvim_buf_get_name(bufnr)
 
 	-- Encode to base64
 	local b64_source_code = vim.base64.encode(source_code)
 
-	M.get_jpa_entity_info(nil, nil, b64_source_code, callback, nil)
+	-- Use file path if available, otherwise just use source code
+	if file_path and file_path ~= "" then
+		M.get_jpa_entity_info(nil, file_path, b64_source_code, callback, nil)
+	else
+		M.get_jpa_entity_info(nil, nil, b64_source_code, callback, nil)
+	end
 end
 
 return M
