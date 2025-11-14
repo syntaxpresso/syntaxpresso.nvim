@@ -9,8 +9,31 @@ local M = {}
 
 local renderer = n.create_renderer()
 
--- Declare and initialize signal at module level so callbacks can access it
-local signal = n.create_signal({
+-- Factory functions to create fresh node instances
+local function create_numeric_id_generation_data()
+	return {
+		n.node({ text = "None (Manual)", is_done = false, id = "none" }),
+		n.node({ text = "Auto", is_done = true, id = "auto" }),
+		n.node({ text = "Identity", is_done = false, id = "identity" }),
+		n.node({ text = "Sequence", is_done = false, id = "sequence" }),
+	}
+end
+
+local function create_generation_type_data()
+	return {
+		n.node({ text = "ORM Provided", is_done = true, id = "orm_provided" }),
+		n.node({ text = "Entity Exclusive Generation", is_done = false, id = "entity_exclusive_generation" }),
+	}
+end
+
+local function create_other_data()
+	return {
+		n.node({ text = "Mandatory", is_done = true, id = "mandatory" }),
+		n.node({ text = "Mutable", is_done = false, id = "mutable" }),
+	}
+end
+
+local DEFAULT_SIGNAL_VALUES = {
 	field_package_path = "java.lang",
 	field_type = "Long",
 	field_name = "id",
@@ -28,26 +51,36 @@ local signal = n.create_signal({
 	allocation_size_hidden = true,
 	other = { "mandatory" },
 	all_id_types = {},
-})
-
--- ID Generation options for numeric types
-local numeric_id_generation_data = {
-	n.node({ text = "None (Manual)", is_done = false, id = "none" }),
-	n.node({ text = "Auto", is_done = true, id = "auto" }),
-	n.node({ text = "Identity", is_done = false, id = "identity" }),
-	n.node({ text = "Sequence", is_done = false, id = "sequence" }),
+	numeric_id_generation_data = create_numeric_id_generation_data(),
+	generation_type_data = create_generation_type_data(),
+	other_data = create_other_data(),
 }
 
--- Generation type options (only for SEQUENCE)
-local generation_type_data = {
-	n.node({ text = "ORM Provided", is_done = true, id = "orm_provided" }),
-	n.node({ text = "Entity Exclusive Generation", is_done = false, id = "entity_exclusive_generation" }),
-}
+local signal = n.create_signal()
 
-local other_data = {
-	n.node({ text = "Mandatory", is_done = true, id = "mandatory" }),
-	n.node({ text = "Mutable", is_done = false, id = "mutable" }),
-}
+local function reset_signal()
+	-- Reset primitive values
+	signal.field_package_path = DEFAULT_SIGNAL_VALUES.field_package_path
+	signal.field_type = DEFAULT_SIGNAL_VALUES.field_type
+	signal.field_name = DEFAULT_SIGNAL_VALUES.field_name
+	signal.id_generation = DEFAULT_SIGNAL_VALUES.id_generation
+	signal.id_generation_type = DEFAULT_SIGNAL_VALUES.id_generation_type
+	signal.generator_name = DEFAULT_SIGNAL_VALUES.generator_name
+	signal.sequence_name = DEFAULT_SIGNAL_VALUES.sequence_name
+	signal.initial_value = DEFAULT_SIGNAL_VALUES.initial_value
+	signal.allocation_size = DEFAULT_SIGNAL_VALUES.allocation_size
+	signal.id_generation_hidden = DEFAULT_SIGNAL_VALUES.id_generation_hidden
+	signal.id_generation_type_hidden = DEFAULT_SIGNAL_VALUES.id_generation_type_hidden
+	signal.generator_name_hidden = DEFAULT_SIGNAL_VALUES.generator_name_hidden
+	signal.sequence_name_hidden = DEFAULT_SIGNAL_VALUES.sequence_name_hidden
+	signal.initial_value_hidden = DEFAULT_SIGNAL_VALUES.initial_value_hidden
+	signal.allocation_size_hidden = DEFAULT_SIGNAL_VALUES.allocation_size_hidden
+	signal.other = DEFAULT_SIGNAL_VALUES.other
+	signal.all_id_types = DEFAULT_SIGNAL_VALUES.all_id_types
+	signal.numeric_id_generation_data = create_numeric_id_generation_data()
+	signal.generation_type_data = create_generation_type_data()
+	signal.other_data = create_other_data()
+end
 
 local function process_entity_info(entity_info)
 	if entity_info and entity_info.entityTableName ~= nil then
@@ -217,12 +250,13 @@ local function render_confirm_button()
 					end)
 				end
 			end, nil)
+			reset_signal()
 		end,
 		hidden = signal.confirm_btn_hidden,
 	})
 end
 
-local function render_component(_previous_button_fn)
+local function components(_previous_button_fn)
 	return n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "New Entity field" }),
@@ -244,7 +278,7 @@ local function render_component(_previous_button_fn)
 		}),
 		select_one.render_component({
 			label = "ID Generation Strategy",
-			data = numeric_id_generation_data,
+			data = signal.numeric_id_generation_data,
 			signal = signal,
 			signal_key = "id_generation",
 			signal_hidden_key = "id_generation_hidden",
@@ -252,7 +286,7 @@ local function render_component(_previous_button_fn)
 		}),
 		select_one.render_component({
 			label = "Generation Type",
-			data = generation_type_data,
+			data = signal.generation_type_data,
 			signal = signal,
 			signal_key = "id_generation_type",
 			signal_hidden_key = "id_generation_type_hidden",
@@ -288,7 +322,7 @@ local function render_component(_previous_button_fn)
 		}),
 		select_many.render_component({
 			title = "Other",
-			data = other_data,
+			data = signal.other_data,
 			signal = signal,
 			signal_key = "other",
 		}),
@@ -298,25 +332,10 @@ local function render_component(_previous_button_fn)
 end
 
 function M.render(_previous_button_fn, _id_types, _entity_info)
-	-- Reset signal to defaults
-	signal.field_package_path = "java.lang"
-	signal.field_type = "Long"
-	signal.field_name = "id"
-	signal.id_generation = "auto"
-	signal.id_generation_type = "orm_provided"
-	signal.initial_value = "1"
-	signal.allocation_size = "50"
-	signal.id_generation_hidden = false
-	signal.id_generation_type_hidden = true
-	signal.generator_name_hidden = true
-	signal.sequence_name_hidden = true
-	signal.initial_value_hidden = true
-	signal.allocation_size_hidden = true
-	signal.other = { "mandatory" }
-
+	reset_signal()
 	process_entity_info(_entity_info)
 	process_id_types(_id_types)
-	renderer:render(render_component(_previous_button_fn))
+	renderer:render(components(_previous_button_fn))
 end
 
 return M

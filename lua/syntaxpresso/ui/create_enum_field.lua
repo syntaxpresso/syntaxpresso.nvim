@@ -7,7 +7,22 @@ local create_jpa_entity_enum_field = require("syntaxpresso.commands.create_jpa_e
 
 local M = {}
 
-local signal = n.create_signal({
+-- Factory functions to create fresh node instances
+local function create_enum_type_storage_data()
+	return {
+		n.node({ text = "ORDINAL", is_done = false, id = "ORDINAL" }),
+		n.node({ text = "STRING", is_done = true, id = "STRING" }),
+	}
+end
+
+local function create_other_data()
+	return {
+		n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
+		n.node({ text = "Unique", is_done = false, id = "unique" }),
+	}
+end
+
+local DEFAULT_SIGNAL_VALUES = {
 	field_path = nil,
 	field_type = nil,
 	field_name = "",
@@ -17,19 +32,28 @@ local signal = n.create_signal({
 	field_length_hidden = true,
 	other = {},
 	all_enum_types = {},
-})
+	enum_type_storage_data = create_enum_type_storage_data(),
+	other_data = create_other_data(),
+}
+
+local signal = n.create_signal()
 
 local renderer = n.create_renderer()
 
-local enum_type_storage_data = {
-	n.node({ text = "ORDINAL", is_done = false, id = "ORDINAL" }),
-	n.node({ text = "STRING", is_done = true, id = "STRING" }),
-}
-
-local other_data = {
-	n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-	n.node({ text = "Unique", is_done = false, id = "unique" }),
-}
+local function reset_signal()
+	-- Reset primitive values
+	signal.field_path = DEFAULT_SIGNAL_VALUES.field_path
+	signal.field_type = DEFAULT_SIGNAL_VALUES.field_type
+	signal.field_name = DEFAULT_SIGNAL_VALUES.field_name
+	signal.field_package_path = DEFAULT_SIGNAL_VALUES.field_package_path
+	signal.enum_type_storage = DEFAULT_SIGNAL_VALUES.enum_type_storage
+	signal.field_length = DEFAULT_SIGNAL_VALUES.field_length
+	signal.field_length_hidden = DEFAULT_SIGNAL_VALUES.field_length_hidden
+	signal.other = DEFAULT_SIGNAL_VALUES.other
+	signal.all_enum_types = DEFAULT_SIGNAL_VALUES.all_enum_types
+	signal.enum_type_storage_data = create_enum_type_storage_data()
+	signal.other_data = create_other_data()
+end
 
 local function auto_field_name(type_name)
 	-- Convert CamelCase to camelCase for field name
@@ -126,12 +150,13 @@ local function render_confirm_button()
 					end)
 				end
 			end, nil)
+			reset_signal()
 		end,
 		hidden = signal.confirm_btn_hidden,
 	})
 end
 
-local function render_component(_previous_button_fn)
+local function components(_previous_button_fn)
 	return n.rows(
 		{ flex = 0 },
 		text.render_component({ text = "New Entity field" }),
@@ -147,7 +172,7 @@ local function render_component(_previous_button_fn)
 		}),
 		select_one.render_component({
 			label = "Enum type storage",
-			data = enum_type_storage_data,
+			data = signal.enum_type_storage_data,
 			signal = signal,
 			signal_key = "enum_type_storage",
 			on_select_callback = enum_type_storage_callback,
@@ -168,7 +193,7 @@ local function render_component(_previous_button_fn)
 		}),
 		select_many.render_component({
 			title = "Other",
-			data = other_data,
+			data = signal.other_data,
 			signal = signal,
 			signal_key = "other",
 		}),
@@ -178,8 +203,9 @@ local function render_component(_previous_button_fn)
 end
 
 function M.render(_previous_button_fn, _enum_files)
+	reset_signal()
 	process_enum_files(_enum_files)
-	renderer:render(render_component(_previous_button_fn))
+	renderer:render(components(_previous_button_fn))
 end
 
 return M

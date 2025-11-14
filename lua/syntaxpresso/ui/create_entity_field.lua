@@ -9,6 +9,23 @@ local M = {}
 
 local renderer = n.create_renderer({ height = 7 })
 
+-- Function to create fresh node instances for field categories
+local function create_field_category_data()
+	return {
+		n.node({ text = "Basic Field", is_done = true, id = "basic" }),
+		n.node({ text = "Enum Field", is_done = false, id = "enum" }),
+		n.node({ text = "ID Field", is_done = false, id = "id" }),
+	}
+end
+
+local DEFAULT_SIGNAL_VALUES = {
+	field_category = "basic",
+	next_button_hidden = false,
+	previous_button_hidden = true,
+	confirm_button_hidden = true,
+	field_category_data = create_field_category_data(),
+}
+
 ---@class EntityFieldDataSources
 ---@field basic_types table[]
 ---@field id_types table[]
@@ -20,22 +37,19 @@ local renderer = n.create_renderer({ height = 7 })
 ---@field enum_files table[]
 ---@field entity_info table
 ---@field source_bufnr number
-
 ---@type EntityFieldDataSources|nil
 local data_sources = nil
 
-local signal = n.create_signal({
-	field_category = "basic",
-	next_button_hidden = false,
-	previous_button_hidden = true,
-	confirm_button_hidden = true,
-})
+local signal = n.create_signal()
 
-local field_category_data = {
-	n.node({ text = "Basic Field", is_done = true, id = "basic" }),
-	n.node({ text = "Enum Field", is_done = false, id = "enum" }),
-	n.node({ text = "ID Field", is_done = false, id = "id" }),
-}
+local function reset_signal()
+	-- Reset primitive values
+	signal.field_category = DEFAULT_SIGNAL_VALUES.field_category
+	signal.next_button_hidden = DEFAULT_SIGNAL_VALUES.next_button_hidden
+	signal.previous_button_hidden = DEFAULT_SIGNAL_VALUES.previous_button_hidden
+	signal.confirm_button_hidden = DEFAULT_SIGNAL_VALUES.confirm_button_hidden
+	signal.field_category_data = create_field_category_data()
+end
 
 local function create_previous_button(child_renderer)
 	return n.button({
@@ -43,13 +57,10 @@ local function create_previous_button(child_renderer)
 		label = "Previous <-",
 		align = "center",
 		on_press = function()
+			reset_signal()
 			child_renderer:close() -- Close child renderer first
 			renderer:close() -- Then close parent renderer
-			signal.field_category = "basic"
-			signal.next_button_hidden = false
-			signal.previous_button_hidden = true
-			signal.confirm_button_hidden = true
-			renderer:render(M.CreateEntityFieldComponent(signal))
+			renderer:render(M.render_field_category_selection())
 		end,
 		hidden = false,
 	})
@@ -89,33 +100,27 @@ local function render_next_button(_signal)
 	})
 end
 
-function M.CreateEntityFieldComponent(_signal)
+function M.render_field_category_selection()
 	return n.tabs(
-		{ active_tab = _signal.active_tab },
+		{ active_tab = signal.active_tab },
 		text.render_component({ text = "New Entity field" }),
 		select_one.render_component({
 			label = "Category",
-			data = field_category_data,
-			signal = _signal,
+			data = signal.field_category_data,
+			signal = signal,
 			signal_key = "field_category",
 			signal_hidden_key = nil,
 			autofocus = true,
 			size = 3,
 		}),
-		n.columns({ flex = 0 }, render_next_button(_signal))
+		n.columns({ flex = 0 }, render_next_button(signal))
 	)
 end
 
 function M.render(_data_sources)
 	data_sources = _data_sources
-
-	-- Reset signal state to initial values
-	signal.field_category = "basic"
-	signal.next_button_hidden = false
-	signal.previous_button_hidden = true
-	signal.confirm_button_hidden = true
-
-	renderer:render(M.CreateEntityFieldComponent(signal))
+	reset_signal()
+	renderer:render(M.render_field_category_selection())
 end
 
 return M

@@ -7,7 +7,43 @@ local create_jpa_entity_basic_field = require("syntaxpresso.commands.create_jpa_
 
 local M = {}
 
-local signal = n.create_signal({
+local renderer = n.create_renderer()
+
+-- Factory functions to create fresh node instances
+local function create_time_zone_storage_data()
+	return {
+		n.node({ text = "NATIVE", is_done = false, id = "NATIVE" }),
+		n.node({ text = "NORMALIZE", is_done = false, id = "NORMALIZE" }),
+		n.node({ text = "NORMALIZE_UTC", is_done = false, id = "NORMALIZE_UTC" }),
+		n.node({ text = "COLUMN", is_done = false, id = "COLUMN" }),
+		n.node({ text = "AUTO", is_done = false, id = "AUTO" }),
+	}
+end
+
+local function create_field_temporal_data()
+	return {
+		n.node({ text = "DATE", is_done = false, id = "DATE" }),
+		n.node({ text = "TIME", is_done = false, id = "TIME" }),
+		n.node({ text = "TIMESTAMP", is_done = false, id = "TIMESTAMP" }),
+	}
+end
+
+local function create_other_data()
+	return {
+		n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
+		n.node({ text = "Unique", is_done = false, id = "unique" }),
+	}
+end
+
+local function create_other_extra_data()
+	return {
+		n.node({ text = "Large object", is_done = false, id = "large_object" }),
+		n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
+		n.node({ text = "Unique", is_done = false, id = "unique" }),
+	}
+end
+
+local DEFAULT_SIGNAL_VALUES = {
 	field_package_path = "java.lang",
 	field_type = "String",
 	field_name = "",
@@ -30,34 +66,43 @@ local signal = n.create_signal({
 	types_with_temporal = {},
 	types_with_extra_other = {},
 	types_with_precision_and_scale = {},
-})
-
-local renderer = n.create_renderer()
-
-local time_zone_storage_data = {
-	n.node({ text = "NATIVE", is_done = false, id = "NATIVE" }),
-	n.node({ text = "NORMALIZE", is_done = false, id = "NORMALIZE" }),
-	n.node({ text = "NORMALIZE_UTC", is_done = false, id = "NORMALIZE_UTC" }),
-	n.node({ text = "COLUMN", is_done = false, id = "COLUMN" }),
-	n.node({ text = "AUTO", is_done = false, id = "AUTO" }),
+	time_zone_storage_data = create_time_zone_storage_data(),
+	field_temporal_data = create_field_temporal_data(),
+	other_data = create_other_data(),
+	other_extra_data = create_other_extra_data(),
 }
 
-local field_temporal_data = {
-	n.node({ text = "DATE", is_done = false, id = "DATE" }),
-	n.node({ text = "TIME", is_done = false, id = "TIME" }),
-	n.node({ text = "TIMESTAMP", is_done = false, id = "TIMESTAMP" }),
-}
+local signal = n.create_signal()
 
-local other_data = {
-	n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-	n.node({ text = "Unique", is_done = false, id = "unique" }),
-}
-
-local other_extra_data = {
-	n.node({ text = "Large object", is_done = false, id = "large_object" }),
-	n.node({ text = "Mandatory", is_done = false, id = "mandatory" }),
-	n.node({ text = "Unique", is_done = false, id = "unique" }),
-}
+local function reset_signal()
+	-- Reset primitive values
+	signal.field_package_path = DEFAULT_SIGNAL_VALUES.field_package_path
+	signal.field_type = DEFAULT_SIGNAL_VALUES.field_type
+	signal.field_name = DEFAULT_SIGNAL_VALUES.field_name
+	signal.field_length = DEFAULT_SIGNAL_VALUES.field_length
+	signal.other = DEFAULT_SIGNAL_VALUES.other
+	signal.field_precision = DEFAULT_SIGNAL_VALUES.field_precision
+	signal.field_scale = DEFAULT_SIGNAL_VALUES.field_scale
+	signal.field_time_zone_storage = DEFAULT_SIGNAL_VALUES.field_time_zone_storage
+	signal.field_temporal = DEFAULT_SIGNAL_VALUES.field_temporal
+	signal.field_length_hidden = DEFAULT_SIGNAL_VALUES.field_length_hidden
+	signal.field_temporal_hidden = DEFAULT_SIGNAL_VALUES.field_temporal_hidden
+	signal.field_time_zone_storage_hidden = DEFAULT_SIGNAL_VALUES.field_time_zone_storage_hidden
+	signal.field_scale_hidden = DEFAULT_SIGNAL_VALUES.field_scale_hidden
+	signal.field_precision_hidden = DEFAULT_SIGNAL_VALUES.field_precision_hidden
+	signal.other_extra_hidden = DEFAULT_SIGNAL_VALUES.other_extra_hidden
+	signal.other_hidden = DEFAULT_SIGNAL_VALUES.other_hidden
+	signal.all_types = DEFAULT_SIGNAL_VALUES.all_types
+	signal.types_with_length = DEFAULT_SIGNAL_VALUES.types_with_length
+	signal.types_with_time_zone_storage = DEFAULT_SIGNAL_VALUES.types_with_time_zone_storage
+	signal.types_with_temporal = DEFAULT_SIGNAL_VALUES.types_with_temporal
+	signal.types_with_extra_other = DEFAULT_SIGNAL_VALUES.types_with_extra_other
+	signal.types_with_precision_and_scale = DEFAULT_SIGNAL_VALUES.types_with_precision_and_scale
+	signal.time_zone_storage_data = create_time_zone_storage_data()
+	signal.field_temporal_data = create_field_temporal_data()
+	signal.other_data = create_other_data()
+	signal.other_extra_data = create_other_extra_data()
+end
 
 local function process_type_data(type_data)
 	local all_types = {}
@@ -155,6 +200,7 @@ local function render_confirm_button()
 					end)
 				end
 			end, nil)
+			reset_signal()
 		end,
 		hidden = signal.confirm_btn_hidden,
 	})
@@ -222,14 +268,14 @@ local function render_component(_previous_button_fn)
 		}),
 		select_one.render_component({
 			label = "Time Zone Storage",
-			data = time_zone_storage_data,
+			data = signal.time_zone_storage_data,
 			signal = signal,
 			signal_key = "field_time_zone_storage",
 			signal_hidden_key = "field_time_zone_storage_hidden",
 		}),
 		select_one.render_component({
 			label = "Temporal",
-			data = field_temporal_data,
+			data = signal.field_temporal_data,
 			signal = signal,
 			signal_key = "field_temporal",
 			signal_hidden_key = "field_temporal_hidden",
@@ -255,14 +301,14 @@ local function render_component(_previous_button_fn)
 		),
 		select_many.render_component({
 			title = "Other",
-			data = other_data,
+			data = signal.other_data,
 			signal = signal,
 			signal_key = "other",
 			signal_hidden_key = "other_hidden",
 		}),
 		select_many.render_component({
 			title = "Other",
-			data = other_extra_data,
+			data = signal.other_extra_data,
 			signal = signal,
 			signal_key = "other",
 			signal_hidden_key = "other_extra_hidden",
@@ -273,6 +319,7 @@ local function render_component(_previous_button_fn)
 end
 
 function M.render(_previous_button_fn, data)
+	reset_signal()
 	process_type_data(data)
 	renderer:render(render_component(_previous_button_fn))
 end
