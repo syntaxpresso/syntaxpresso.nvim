@@ -283,6 +283,7 @@ local function components(_previous_button_fn)
 			signal_key = "id_generation",
 			signal_hidden_key = "id_generation_hidden",
 			on_select_callback = on_id_generation_select,
+			size = 4,
 		}),
 		select_one.render_component({
 			label = "Generation Type",
@@ -291,6 +292,7 @@ local function components(_previous_button_fn)
 			signal_key = "id_generation_type",
 			signal_hidden_key = "id_generation_type_hidden",
 			on_select_callback = on_generation_type_select,
+			size = 2,
 		}),
 		text_input.render_component({
 			title = "Generator name (required)",
@@ -325,6 +327,7 @@ local function components(_previous_button_fn)
 			data = signal.other_data,
 			signal = signal,
 			signal_key = "other",
+			size = 2,
 		}),
 		n.gap(1),
 		n.columns(_previous_button_fn(renderer), render_confirm_button())

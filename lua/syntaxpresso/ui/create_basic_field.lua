@@ -272,6 +272,7 @@ local function render_component(_previous_button_fn)
 			signal = signal,
 			signal_key = "field_time_zone_storage",
 			signal_hidden_key = "field_time_zone_storage_hidden",
+			size = 5,
 		}),
 		select_one.render_component({
 			label = "Temporal",
@@ -279,6 +280,7 @@ local function render_component(_previous_button_fn)
 			signal = signal,
 			signal_key = "field_temporal",
 			signal_hidden_key = "field_temporal_hidden",
+			size = 3,
 		}),
 		n.columns(
 			{ flex = 0, hidden = signal.field_precision_hidden and signal.field_scale_hidden },
@@ -305,6 +307,7 @@ local function render_component(_previous_button_fn)
 			signal = signal,
 			signal_key = "other",
 			signal_hidden_key = "other_hidden",
+			size = 2,
 		}),
 		select_many.render_component({
 			title = "Other",
@@ -312,6 +315,7 @@ local function render_component(_previous_button_fn)
 			signal = signal,
 			signal_key = "other",
 			signal_hidden_key = "other_extra_hidden",
+			size = 3,
 		}),
 		n.gap(1),
 		n.columns(_previous_button_fn(renderer), render_confirm_button())
