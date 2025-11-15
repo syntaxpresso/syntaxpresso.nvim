@@ -2,6 +2,7 @@ local installer = require("syntaxpresso.installer")
 local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
 local create_java_file = require("syntaxpresso.ui.create_java_file")
 local create_entity_field = require("syntaxpresso.ui.create_entity_field")
+local create_entity_relationship = require("syntaxpresso.ui.create_entity_relationship")
 local command_runner = require("syntaxpresso.utils.command_runner")
 local get_all_packages = require("syntaxpresso.commands.get_all_packages")
 local get_java_files = require("syntaxpresso.commands.get_java_files")
@@ -228,6 +229,52 @@ function M.setup(opts)
 									return
 								end
 								results.enum_files = response
+								check_and_render()
+							end)
+							get_jpa_entity_info.get_jpa_entity_info_from_buffer(function(response, error)
+								if error then
+									has_error = true
+									vim.notify("Failed to get entity info: " .. error, vim.log.levels.WARN)
+									return
+								end
+								results.entity_info = response and response.data or nil
+								check_and_render()
+							end)
+						end,
+					},
+					{
+						title = "Create JPA Entity relationship",
+						action = function()
+							-- Capture the source buffer number before opening UI
+							local source_bufnr = vim.api.nvim_get_current_buf()
+							local results = {
+								entity_files = nil,
+								entity_info = nil,
+							}
+							local completed = 0
+							local total = 2
+							local has_error = false
+							local function check_and_render()
+								completed = completed + 1
+								if completed == total and not has_error then
+									if results.entity_files and results.entity_info then
+										vim.schedule(function()
+											create_entity_relationship.render({
+												source_bufnr = source_bufnr,
+												entity_files = results.entity_files,
+												entity_info = results.entity_info,
+											})
+										end)
+									end
+								end
+							end
+							get_java_files.get_java_files_simple("class", function(response, error)
+								if error then
+									has_error = true
+									vim.notify("Failed to get entity files: " .. error, vim.log.levels.WARN)
+									return
+								end
+								results.entity_files = response
 								check_and_render()
 							end)
 							get_jpa_entity_info.get_jpa_entity_info_from_buffer(function(response, error)

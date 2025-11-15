@@ -37,6 +37,16 @@ local function build_args_from_table(tbl)
 					table.insert(parts, "--" .. key)
 				end
 				-- Skip false boolean values (don't add the flag)
+				-- Handle array values (repeat flag for each value)
+			elseif type(value) == "table" and #value > 0 then
+				for _, item in ipairs(value) do
+					local str_item = tostring(item)
+					-- Handle spaces and special characters by quoting
+					if str_item:find("%s") or str_item:find("[\"'\\]") then
+						str_item = '"' .. str_item:gsub('"', '\\"') .. '"'
+					end
+					table.insert(parts, "--" .. key .. "=" .. str_item)
+				end
 			else
 				local arg_value = value
 
