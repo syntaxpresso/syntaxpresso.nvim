@@ -34,12 +34,13 @@ function M.setup(opts)
 		method = { require("null-ls").methods.CODE_ACTION },
 		filetypes = { "java" },
 		generator = {
-			fn = function()
+			fn = function(params)
 				local executable = get_executable()
 				if vim.fn.filereadable(executable) ~= 1 then
 					return {}
 				end
-				return {
+
+				local actions = {
 					{
 						title = "Create Java file",
 						action = function()
@@ -100,7 +101,25 @@ function M.setup(opts)
 							end)
 						end,
 					},
-					{
+				}
+
+				-- Check if current file is a JPA entity
+				-- We need to do this synchronously to decide which actions to show
+				local bufnr = params.bufnr or vim.api.nvim_get_current_buf()
+				local is_jpa_entity = false
+
+				-- Quick check: if buffer has @Entity annotation, it's likely a JPA entity
+				local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+				for _, line in ipairs(lines) do
+					if line:match("@Entity") then
+						is_jpa_entity = true
+						break
+					end
+				end
+
+				-- Only add field and relationship actions if it's a JPA entity
+				if is_jpa_entity then
+					table.insert(actions, {
 						title = "Create JPA Entity field",
 						action = function()
 							-- Capture the source buffer number before opening UI
@@ -241,8 +260,9 @@ function M.setup(opts)
 								check_and_render()
 							end)
 						end,
-					},
-					{
+					})
+
+					table.insert(actions, {
 						title = "Create JPA Entity relationship",
 						action = function()
 							-- Capture the source buffer number before opening UI
@@ -287,8 +307,10 @@ function M.setup(opts)
 								check_and_render()
 							end)
 						end,
-					},
-				}
+					})
+				end
+
+				return actions
 			end,
 		},
 	})
