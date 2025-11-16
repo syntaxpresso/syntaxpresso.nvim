@@ -74,6 +74,9 @@ local DEFAULT_SIGNAL_VALUES = {
 
 local signal = n.create_signal()
 
+-- Module-level variable to store source_bufnr (not in signal, to avoid reset issues)
+local source_bufnr = nil
+
 local function reset_signal()
 	-- Reset primitive values
 	signal.field_package_path = DEFAULT_SIGNAL_VALUES.field_package_path
@@ -199,7 +202,7 @@ local function render_confirm_button()
 						vim.cmd("checktime")
 					end)
 				end
-			end, nil)
+			end, { source_bufnr = source_bufnr })
 			reset_signal()
 		end,
 		hidden = signal.confirm_btn_hidden,
@@ -322,9 +325,10 @@ local function render_component(_previous_button_fn)
 	)
 end
 
-function M.render(_previous_button_fn, data)
+function M.render(_previous_button_fn, data, _source_bufnr)
 	reset_signal()
 	process_type_data(data)
+	source_bufnr = _source_bufnr  -- Store in module-level variable
 	renderer:render(render_component(_previous_button_fn))
 end
 

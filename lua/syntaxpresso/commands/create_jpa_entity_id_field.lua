@@ -50,15 +50,29 @@ end
 ---Create a JPA entity ID field
 ---@param field_config table Field configuration from UI
 ---@param callback fun(response: table|nil, error: string|nil) Callback function
----@param options table|nil Optional settings
+---@param options table|nil Optional settings (should include source_bufnr)
 function M.create_jpa_entity_id_field(field_config, callback, options)
 	-- Validate required parameters
 	if not callback or type(callback) ~= "function" then
 		error("Callback function is required")
 	end
 
+	-- Get the source buffer number from options, fallback to current buffer
+	local bufnr = (options and options.source_bufnr) or 0
+
+	-- Ensure bufnr is a valid number (convert if needed, fallback to 0)
+	if type(bufnr) ~= "number" then
+		bufnr = tonumber(bufnr) or 0
+	end
+
+	-- Validate that buffer exists and is valid
+	if bufnr ~= 0 and not vim.api.nvim_buf_is_valid(bufnr) then
+		callback(nil, "Invalid buffer: buffer does not exist or has been closed")
+		return
+	end
+
 	-- Get fresh context from the specified buffer
-	local ctx = context.get_buffer_context(0)
+	local ctx = context.get_buffer_context(bufnr)
 
 	if not ctx.entity_file_path or ctx.entity_file_path == "" then
 		callback(nil, "Entity file path is required")

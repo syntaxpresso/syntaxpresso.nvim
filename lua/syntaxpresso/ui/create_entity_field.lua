@@ -86,11 +86,16 @@ local function render_next_button(_signal)
 					types_with_temporal = data_sources.types_with_temporal,
 					types_with_extra_other = data_sources.types_with_extra_other,
 					types_with_precision_and_scale = data_sources.types_with_precision_and_scale,
-				})
+				}, data_sources.source_bufnr)
 			elseif _signal.field_category:get_value() == "enum" then
-				enum_field.render(create_previous_button, data_sources.enum_files)
+				enum_field.render(create_previous_button, data_sources.enum_files, data_sources.source_bufnr)
 			elseif _signal.field_category:get_value() == "id" then
-				id_field.render(create_previous_button, data_sources.id_types, data_sources.entity_info)
+				id_field.render(
+					create_previous_button,
+					data_sources.id_types,
+					data_sources.entity_info,
+					data_sources.source_bufnr
+				)
 			end
 			_signal.next_button_hidden = true
 			_signal.confirm_button_hidden = false

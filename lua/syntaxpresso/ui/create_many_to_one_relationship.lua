@@ -267,9 +267,29 @@ local function render_confirm_button()
 
 					if response then
 						vim.notify("Many-to-One relationship created successfully!", vim.log.levels.INFO)
-						-- Reload buffer to show changes
+						-- Reload all affected buffers
 						vim.schedule(function()
-							vim.cmd("checktime")
+							if response.data and response.data.files then
+								-- Reload all modified entity files
+								for _, file in ipairs(response.data.files) do
+									local file_path = file.filePath
+									-- Find buffer by file path
+									for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+										if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then
+											local buf_name = vim.api.nvim_buf_get_name(buf)
+											if buf_name == file_path then
+												-- Reload the buffer
+												vim.api.nvim_buf_call(buf, function()
+													vim.cmd("checktime")
+												end)
+											end
+										end
+									end
+								end
+							else
+								-- Fallback: reload current buffer only
+								vim.cmd("checktime")
+							end
 						end)
 					end
 				end,
