@@ -70,8 +70,12 @@ All features are accessible through Neovim's native code actions (`<leader>ca` o
 ### Prerequisites
 
 - Neovim 0.9.0+
-- [Syntaxpresso Core](https://github.com/syntaxpresso/core) CLI installed and accessible in PATH
+- [Syntaxpresso Core](https://github.com/syntaxpresso/core) **UI-enabled binary** installed and accessible in PATH
+  - Download `syntaxpresso-core-ui-{platform}-{arch}` from the [latest release](https://github.com/syntaxpresso/core/releases)
+  - Or build from source with: `cargo build --release --features ui`
 - Java project with JPA entities
+
+**Important**: This plugin requires the **UI-enabled** variant of Syntaxpresso Core (binaries with `-ui-` in the name) as it uses the interactive terminal UI commands.
 
 ### Using lazy.nvim
 
@@ -84,8 +88,8 @@ All features are accessible through Neovim's native code actions (`<leader>ca` o
   },
   config = function()
     require("syntaxpresso").setup({
-      -- Optional: specify custom executable path
-      -- executable_path = "/path/to/syntaxpresso-core"
+      -- Optional: specify custom executable path for UI-enabled binary
+      -- executable_path = "/path/to/syntaxpresso-core-ui"
     })
   end,
 }
@@ -119,6 +123,14 @@ git clone https://github.com/grapp-dev/nui-components.nvim.git \
 
 git clone https://github.com/MunifTanjim/nui.nvim.git \
   ~/.local/share/nvim/site/pack/plugins/start/nui.nvim
+
+# Download and install Syntaxpresso Core UI-enabled binary
+# Choose the appropriate binary for your platform from:
+# https://github.com/syntaxpresso/core/releases
+# Example for Linux:
+wget https://github.com/syntaxpresso/core/releases/latest/download/syntaxpresso-core-ui-linux-amd64
+chmod +x syntaxpresso-core-ui-linux-amd64
+sudo mv syntaxpresso-core-ui-linux-amd64 /usr/local/bin/syntaxpresso-core
 ```
 
 ## Usage
@@ -233,8 +245,8 @@ private Long id;
 
 ```lua
 require("syntaxpresso").setup({
-  -- Path to syntaxpresso-core executable
-  -- If not specified, searches in PATH
+  -- Path to syntaxpresso-core UI-enabled executable
+  -- If not specified, searches in PATH for 'syntaxpresso-core'
   executable_path = nil,
 
   -- Default timeout for commands (in milliseconds)
@@ -258,34 +270,37 @@ vim.keymap.set("n", "<leader>jr", "<cmd>lua require('syntaxpresso').create_relat
 
 ### Communication Flow
 
-Syntaxpresso.nvim communicates with Syntaxpresso Core through a **request-response model**:
+Syntaxpresso.nvim uses the **Rust core's built-in TUI** for all interactive forms:
 
 1. **User Action**: User triggers a code action in Neovim
-2. **UI Collection**: Interactive UI collects configuration through wizard forms
-3. **Data Transformation**: Lua modules transform UI data to CLI arguments
-4. **Process Spawn**: Command runner spawns syntaxpresso-core process
-5. **Execution**: Core processes request and generates/modifies code
-6. **Response**: Core returns JSON response via stdout
-7. **Update**: UI displays result and reloads buffer
+2. **UI Launcher**: Plugin spawns `syntaxpresso-core ui <command>` in a floating terminal
+3. **Interactive TUI**: Rust-based terminal UI (ratatui) collects configuration
+4. **Direct Execution**: Core processes request and generates/modifies code directly
+5. **Exit**: TUI exits, plugin reloads buffer to show changes
 
 ```
-┌─────────────┐          ┌──────────────┐          ┌─────────────┐
-│   Neovim    │          │  Command     │          │ Syntaxpresso│
-│     UI      │──────────│   Runner     │──────────│    Core     │
-│  (Lua/nui)  │  Config  │  (Lua/vim)   │   CLI    │   (Rust)    │
-└─────────────┘          └──────────────┘          └─────────────┘
+┌─────────────┐          ┌──────────────┐          ┌─────────────────────┐
+│   Neovim    │          │ UI Launcher  │          │ Syntaxpresso Core   │
+│ Code Action │──────────│  (Lua/vim)   │──────────│ (Rust Binary)       │
+│  (Lua/nui)  │  Trigger │              │   Spawn  │                     │
+└─────────────┘          └──────────────┘          └─────────────────────┘
       │                         │                         │
-      │  Wizard Forms           │                         │
+      │  Trigger Action         │                         │
       │  ───────────►           │                         │
-      │                         │  Spawn Process          │
+      │                         │  termopen()             │
+      │                         │  `core ui <cmd>`        │
       │                         │  ─────────────────────► │
       │                         │                         │
-      │                         │                 Execute Command
-      │                         │                 Generate Code
+      │                         │              ┌──────────▼─────────┐
+      │                         │              │ Interactive TUI    │
+      │                         │              │ (ratatui forms)    │
+      │                         │              │ - Collect input    │
+      │                         │              │ - Validate data    │
+      │                         │              │ - Generate code    │
+      │                         │              └──────────┬─────────┘
       │                         │                         │
-      │                         │  JSON Response          │
+      │                         │  Exit (code 0)          │
       │                         │  ◄───────────────────── │
-      │  Notification           │                         │
       │  Buffer Reload          │                         │
       │  ◄───────────           │                         │
 ```
@@ -296,36 +311,14 @@ Syntaxpresso.nvim communicates with Syntaxpresso Core through a **request-respon
 syntaxpresso.nvim/
 ├── lua/
 │   └── syntaxpresso/
-│       ├── init.lua                 # Main entry point
-│       ├── installer.lua            # Core binary installer
-│       ├── commands/                # Command modules
-│       │   ├── create_jpa_entity.lua
-│       │   ├── create_jpa_entity_basic_field.lua
-│       │   ├── create_jpa_entity_id_field.lua
-│       │   ├── create_jpa_entity_enum_field.lua
-│       │   ├── create_jpa_one_to_one_relationship.lua
-│       │   ├── create_jpa_many_to_one_relationship.lua
-│       │   └── create_jpa_repository.lua
-│       ├── ui/                      # UI components
-│       │   ├── components/          # Reusable UI elements
-│       │   │   ├── select_one.lua
-│       │   │   ├── select_many.lua
-│       │   │   ├── text_input.lua
-│       │   │   └── text.lua
-│       │   ├── create_entity_field.lua
-│       │   ├── create_basic_field.lua
-│       │   ├── create_id_field.lua
-│       │   ├── create_enum_field.lua
-│       │   ├── create_entity_relationship.lua
-│       │   ├── create_one_to_one_relationship.lua
-│       │   ├── create_many_to_one_relationship.lua
-│       │   └── create_repository.lua
-│       └── utils/                   # Utility modules
-│           ├── command_runner.lua   # CLI execution
-│           └── context.lua          # Buffer context
+│       ├── init.lua         # Main entry point & code actions
+│       ├── installer.lua    # Core binary installer
+│       └── ui_launcher.lua  # Rust TUI launcher
 └── plugin/
-    └── syntaxpresso.lua             # Plugin initialization
+    └── syntaxpresso.lua     # Plugin initialization
 ```
+
+**Note**: All interactive UI forms and data queries are provided by the Rust core binary (`syntaxpresso-core ui` commands). The Neovim plugin serves as a minimal wrapper that launches the core's TUI in floating terminal windows.
 
 ## Development
 
@@ -346,10 +339,15 @@ cd syntaxpresso.nvim
   },
   config = function()
     require("syntaxpresso").setup({
-      executable_path = "/path/to/syntaxpresso-core/target/debug/syntaxpresso-core"
+      -- Point to your UI-enabled dev build
+      executable_path = "/path/to/syntaxpresso-core/target/release/syntaxpresso-core"
     })
   end
 }
+
+# Build the UI-enabled core binary for development
+cd /path/to/syntaxpresso-core
+cargo build --release --features ui
 ```
 
 ### Adding a New Command
@@ -389,9 +387,9 @@ end
 
 ### Common Issues
 
-**Issue**: "syntaxpresso-core not found"
+**Issue**: "syntaxpresso-core not found" or "ui command not found"
 
-- **Solution**: Install Syntaxpresso Core and ensure it's in PATH, or set `executable_path` in setup
+- **Solution**: Install the **UI-enabled** Syntaxpresso Core binary (`syntaxpresso-core-ui-*`) and ensure it's in PATH or set `executable_path` in setup. The CLI-only binary does not include UI commands.
 
 **Issue**: Code actions not appearing
 
