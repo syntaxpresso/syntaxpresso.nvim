@@ -1,14 +1,5 @@
 local installer = require("syntaxpresso.installer")
-local create_jpa_entity = require("syntaxpresso.ui.create_jpa_entity")
-local create_java_file = require("syntaxpresso.ui.create_java_file")
-local create_entity_field = require("syntaxpresso.ui.create_entity_field")
-local create_entity_relationship = require("syntaxpresso.ui.create_entity_relationship")
-local command_runner = require("syntaxpresso.utils.command_runner")
-local get_all_packages = require("syntaxpresso.commands.get_all_packages")
-local get_java_files = require("syntaxpresso.commands.get_java_files")
-local get_java_basic_types = require("syntaxpresso.commands.get_java_basic_types")
-local get_all_superclasses = require("syntaxpresso.commands.get_all_superclasses")
-local get_jpa_entity_info = require("syntaxpresso.commands.get_jpa_entity_info")
+local ui_launcher = require("syntaxpresso.ui_launcher")
 
 local M = {}
 
@@ -17,9 +8,6 @@ local setup_called = false
 
 function M.setup(opts)
 	opts = opts or {}
-
-	-- Setup command runner with the same configuration
-	command_runner.setup(opts)
 
 	local get_executable = function()
 		if opts.executable_path then
@@ -44,61 +32,15 @@ function M.setup(opts)
 					{
 						title = "Create Java file",
 						action = function()
-							get_all_packages.get_all_packages_simple(function(response, error)
-								if error then
-									vim.notify("Failed to get packages: " .. error, vim.log.levels.WARN)
-									return
-								end
-								local results = {
-									packages = response,
-								}
-								vim.schedule(function()
-									create_java_file.render_create_java_file_ui(results)
-								end)
-							end)
+							-- Use Rust UI
+							ui_launcher.launch_create_java_file()
 						end,
 					},
 					{
 						title = "Create JPA Entity",
 						action = function()
-							local results = {
-								packages = nil,
-								superclasses = nil,
-							}
-							local completed = 0
-							local total = 2
-							local has_error = false
-							local function check_and_render()
-								completed = completed + 1
-								if completed == total and not has_error then
-									if results.packages and results.superclasses then
-										vim.schedule(function()
-											create_jpa_entity.render_create_jpa_entity_ui({
-												packages = results.packages,
-												superclasses = results.superclasses,
-											})
-										end)
-									end
-								end
-							end
-							get_all_packages.get_all_packages_simple(function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get packages: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.packages = response
-								check_and_render()
-							end)
-							get_all_superclasses.get_all_superclasses_simple(function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get superclasses: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.superclasses = response
-								check_and_render()
-							end)
+							-- Use Rust UI
+							ui_launcher.launch_create_jpa_entity()
 						end,
 					},
 				}
@@ -122,190 +64,16 @@ function M.setup(opts)
 					table.insert(actions, {
 						title = "Create JPA Entity field",
 						action = function()
-							-- Capture the source buffer number before opening UI
-							local source_bufnr = vim.api.nvim_get_current_buf()
-							local exec = get_executable()
-							local results = {
-								basic_types = nil,
-								id_types = nil,
-								types_with_length = nil,
-								types_with_time_zone_storage = nil,
-								types_with_temporal = nil,
-								types_with_extra_other = nil,
-								types_with_precision_and_scale = nil,
-								enum_files = nil,
-								entity_info = nil,
-							}
-							local completed = 0
-							local total = 9
-							local has_error = false
-							local function check_and_render()
-								completed = completed + 1
-								if completed == total and not has_error then
-									if
-										results.basic_types
-										and results.id_types
-										and results.types_with_length
-										and results.types_with_time_zone_storage
-										and results.types_with_temporal
-										and results.types_with_extra_other
-										and results.types_with_precision_and_scale
-										and results.enum_files
-										and results.entity_info
-									then
-										vim.schedule(function()
-											create_entity_field.render({
-												source_bufnr = source_bufnr,
-												basic_types = results.basic_types,
-												id_types = results.id_types,
-												types_with_length = results.types_with_length,
-												types_with_time_zone_storage = results.types_with_time_zone_storage,
-												types_with_temporal = results.types_with_temporal,
-												types_with_extra_other = results.types_with_extra_other,
-												types_with_precision_and_scale = results.types_with_precision_and_scale,
-												enum_files = results.enum_files,
-												entity_info = results.entity_info,
-											})
-										end)
-									end
-								end
-							end
-							get_java_basic_types.get_java_basic_types(exec, "all-types", function(response)
-								if not response then
-									has_error = true
-									vim.notify("Failed to get basic types", vim.log.levels.WARN)
-									return
-								end
-								results.basic_types = response
-								check_and_render()
-							end)
-							get_java_basic_types.get_java_basic_types(exec, "id-types", function(response)
-								if not response then
-									has_error = true
-									vim.notify("Failed to get id types", vim.log.levels.WARN)
-									return
-								end
-								results.id_types = response
-								check_and_render()
-							end)
-							get_java_basic_types.get_java_basic_types(exec, "types-with-length", function(response)
-								if not response then
-									has_error = true
-									vim.notify("Failed to get types with length", vim.log.levels.WARN)
-									return
-								end
-								results.types_with_length = response
-								check_and_render()
-							end)
-							get_java_basic_types.get_java_basic_types(
-								exec,
-								"types-with-time-zone-storage",
-								function(response)
-									if not response then
-										has_error = true
-										vim.notify("Failed to get types with time zone storage", vim.log.levels.WARN)
-										return
-									end
-									results.types_with_time_zone_storage = response
-									check_and_render()
-								end
-							)
-							get_java_basic_types.get_java_basic_types(exec, "types-with-temporal", function(response)
-								if not response then
-									has_error = true
-									vim.notify("Failed to get types with temporal", vim.log.levels.WARN)
-									return
-								end
-								results.types_with_temporal = response
-								check_and_render()
-							end)
-							get_java_basic_types.get_java_basic_types(exec, "types-with-extra-other", function(response)
-								if not response then
-									has_error = true
-									vim.notify("Failed to get types with extra other", vim.log.levels.WARN)
-									return
-								end
-								results.types_with_extra_other = response
-								check_and_render()
-							end)
-							get_java_basic_types.get_java_basic_types(
-								exec,
-								"types-with-precision-and-scale",
-								function(response)
-									if not response then
-										has_error = true
-										vim.notify("Failed to get types with precision and scale", vim.log.levels.WARN)
-										return
-									end
-									results.types_with_precision_and_scale = response
-									check_and_render()
-								end
-							)
-							get_java_files.get_java_files_simple("enum", function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get enum files: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.enum_files = response
-								check_and_render()
-							end)
-							get_jpa_entity_info.get_jpa_entity_info_from_buffer(function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get entity info: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.entity_info = response and response.data or nil
-								check_and_render()
-							end)
+							-- Use Rust UI
+							ui_launcher.launch_create_entity_field()
 						end,
 					})
 
 					table.insert(actions, {
 						title = "Create JPA Entity relationship",
 						action = function()
-							-- Capture the source buffer number before opening UI
-							local source_bufnr = vim.api.nvim_get_current_buf()
-							local results = {
-								entity_files = nil,
-								entity_info = nil,
-							}
-							local completed = 0
-							local total = 2
-							local has_error = false
-							local function check_and_render()
-								completed = completed + 1
-								if completed == total and not has_error then
-									if results.entity_files and results.entity_info then
-										vim.schedule(function()
-											create_entity_relationship.render({
-												source_bufnr = source_bufnr,
-												entity_files = results.entity_files,
-												entity_info = results.entity_info,
-											})
-										end)
-									end
-								end
-							end
-							get_java_files.get_java_files_simple("class", function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get entity files: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.entity_files = response
-								check_and_render()
-							end)
-							get_jpa_entity_info.get_jpa_entity_info_from_buffer(function(response, error)
-								if error then
-									has_error = true
-									vim.notify("Failed to get entity info: " .. error, vim.log.levels.WARN)
-									return
-								end
-								results.entity_info = response and response.data or nil
-								check_and_render()
-							end)
+							-- Use Rust UI
+							ui_launcher.launch_create_entity_relationship()
 						end,
 					})
 				end
@@ -363,6 +131,34 @@ function M.setup(opts)
 		end)
 	end, {
 		desc = "Checks for and installs updates to the syntaxpresso core binary.",
+	})
+
+	-- Create user command for creating Java files using Rust UI
+	vim.api.nvim_create_user_command("SyntaxpressoCreateJavaFile", function()
+		ui_launcher.launch_create_java_file()
+	end, {
+		desc = "Create a new Java file using Rust UI",
+	})
+
+	-- Create user command for creating JPA entities using Rust UI
+	vim.api.nvim_create_user_command("SyntaxpressoCreateJpaEntity", function()
+		ui_launcher.launch_create_jpa_entity()
+	end, {
+		desc = "Create a new JPA Entity using Rust UI",
+	})
+
+	-- Create user command for creating entity fields using Rust UI
+	vim.api.nvim_create_user_command("SyntaxpressoCreateEntityField", function()
+		ui_launcher.launch_create_entity_field()
+	end, {
+		desc = "Create a new JPA Entity field using Rust UI",
+	})
+
+	-- Create user command for creating entity relationships using Rust UI
+	vim.api.nvim_create_user_command("SyntaxpressoCreateEntityRelationship", function()
+		ui_launcher.launch_create_entity_relationship()
+	end, {
+		desc = "Create a new JPA Entity relationship using Rust UI",
 	})
 end
 
