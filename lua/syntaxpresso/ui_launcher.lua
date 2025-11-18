@@ -11,13 +11,130 @@ local function get_core_executable()
 		return installed_path
 	end
 
-	-- Fallback: try development path
-	local dev_path = vim.fn.expand("~/Documents/projects/syntaxpresso/core/target/release/syntaxpresso-core")
-	if vim.fn.executable(dev_path) == 1 then
-		return dev_path
+	return nil
+end
+
+---Parse JSON response from captured stdout lines
+---@param lines table List of output lines from command
+---@return table|nil Parsed response or nil
+local function parse_response(lines)
+	if not lines or #lines == 0 then
+		return nil
+	end
+
+	-- Search backwards for JSON (last line should be the JSON response)
+	for i = #lines, 1, -1 do
+		local line = lines[i]
+		-- Try to parse as JSON (Response<T> always starts with {)
+		if line:match("^%s*{") then
+			local ok, result = pcall(vim.json.decode, line)
+			if ok and result.succeed ~= nil then -- Looks like Response<T>
+				return result
+			end
+		end
 	end
 
 	return nil
+end
+
+---Reload a specific buffer if it's open
+---@param file_path string Path to file
+local function reload_buffer(file_path)
+	local bufnr = vim.fn.bufnr(file_path)
+	if bufnr ~= -1 then
+		vim.api.nvim_buf_call(bufnr, function()
+			vim.cmd("checktime") -- Reload only this buffer
+		end)
+	end
+end
+
+---Open a file in the editor
+---@param file_path string Path to file
+local function open_file(file_path)
+	if vim.fn.filereadable(file_path) == 1 then
+		vim.cmd("edit " .. vim.fn.fnameescape(file_path))
+	end
+end
+
+---Handle successful operation with structured response
+---@param response table Parsed JSON response
+---@param opts table Options passed to launch_ui
+local function handle_success(response, opts)
+	local data = response.data
+
+	if not data then
+		vim.notify("Operation completed successfully!", vim.log.levels.INFO)
+		return
+	end
+
+	-- Handle different response types based on command
+	local command = response.command
+
+	if command == "create-java-file" or command == "create-jpa-entity" then
+		-- FileResponse: { fileType, filePackageName, filePath }
+		if data.filePath then
+			reload_buffer(data.filePath)
+			open_file(data.filePath)
+			vim.notify("Created: " .. data.filePath, vim.log.levels.INFO)
+		end
+	elseif
+		command == "create-entity-basic-field"
+		or command == "create-entity-id-field"
+		or command == "create-entity-enum-field"
+	then
+		-- CreateEntityFieldResponse: { entityFilePath, fieldName, fieldType }
+		if data.entityFilePath then
+			reload_buffer(data.entityFilePath)
+			vim.notify(
+				string.format("Created field '%s' of type '%s'", data.fieldName or "?", data.fieldType or "?"),
+				vim.log.levels.INFO
+			)
+		end
+	elseif command == "create-one-to-one-relationship" or command == "create-many-to-one-relationship" then
+		-- CreateRelationshipResponse: { owningSideEntityPath, inverseSideEntityPath, ... }
+		local files_updated = 0
+
+		if data.owningSideEntityPath then
+			reload_buffer(data.owningSideEntityPath)
+			files_updated = files_updated + 1
+		end
+
+		if data.inverseSideEntityPath then
+			reload_buffer(data.inverseSideEntityPath)
+			files_updated = files_updated + 1
+		end
+
+		vim.notify(
+			string.format("Relationship created (%d file%s updated)", files_updated, files_updated ~= 1 and "s" or ""),
+			vim.log.levels.INFO
+		)
+	else
+		-- Generic success
+		vim.notify("Operation completed successfully!", vim.log.levels.INFO)
+	end
+
+	-- Call custom success callback if provided
+	if opts.on_success then
+		opts.on_success(response)
+	end
+end
+
+---Handle error with structured response
+---@param response table|nil Parsed JSON response (if available)
+---@param exit_code number Process exit code
+---@param opts table Options passed to launch_ui
+local function handle_error(response, exit_code, opts)
+	if response and response.errorReason then
+		vim.notify("Error: " .. response.errorReason, vim.log.levels.ERROR)
+	elseif exit_code ~= 1 then
+		-- Exit code 1 is user cancellation, don't show error
+		vim.notify("Operation failed (exit code: " .. exit_code .. ")", vim.log.levels.ERROR)
+	end
+
+	-- Call custom error callback if provided
+	if opts.on_error then
+		opts.on_error(exit_code, response)
+	end
 end
 
 ---Launch the Rust UI in a floating terminal window
@@ -67,6 +184,9 @@ function M.launch_ui(ui_command, args, opts)
 	-- Create buffer for terminal
 	local buf = vim.api.nvim_create_buf(false, true)
 
+	-- Capture stdout for JSON parsing
+	local stdout_lines = {}
+
 	-- Create floating window
 	local win = vim.api.nvim_open_win(buf, true, {
 		relative = "editor",
@@ -87,6 +207,16 @@ function M.launch_ui(ui_command, args, opts)
 	---@diagnostic disable-next-line: deprecated
 	local job_id = vim.fn.termopen(cmd_parts, {
 		cwd = vim.fn.getcwd(),
+		on_stdout = function(_, data)
+			-- Capture stdout for JSON parsing
+			if data then
+				for _, line in ipairs(data) do
+					if line ~= "" then
+						table.insert(stdout_lines, line)
+					end
+				end
+			end
+		end,
 		on_exit = function(_, exit_code)
 			vim.schedule(function()
 				-- Close window and buffer
@@ -97,17 +227,24 @@ function M.launch_ui(ui_command, args, opts)
 					vim.api.nvim_buf_delete(buf, { force = true })
 				end
 
-				-- Handle exit code
-				if exit_code == 0 then
-					-- Success! Reload buffer to show changes
-					vim.cmd("checktime")
-					if opts.on_success then
-						opts.on_success()
-					else
-						vim.notify("Operation completed successfully!", vim.log.levels.INFO)
+				-- Parse JSON response from stdout
+				local response = parse_response(stdout_lines)
+
+				-- Handle result based on exit code and response
+				if exit_code == 0 and response and response.succeed then
+					handle_success(response, opts)
+				elseif response then
+					handle_error(response, exit_code, opts)
+				else
+					-- Fallback: no JSON response
+					if exit_code == 0 then
+						-- Success but no JSON (shouldn't happen with new code)
+						vim.cmd("checktime") -- Reload all buffers as fallback
+						vim.notify("Operation completed!", vim.log.levels.INFO)
+					elseif exit_code ~= 1 then
+						-- Error and no JSON (exit code 1 is cancellation)
+						vim.notify("Operation failed (exit code: " .. exit_code .. ")", vim.log.levels.ERROR)
 					end
-				elseif exit_code ~= 0 and opts.on_error then
-					opts.on_error(exit_code)
 				end
 			end)
 		end,
@@ -160,14 +297,6 @@ function M.launch_create_java_file(opts)
 	}, {
 		width = opts.width or 80,
 		height = opts.height or 20,
-		on_success = function()
-			vim.notify("Java file created successfully!", vim.log.levels.INFO)
-		end,
-		on_error = function(code)
-			if code ~= 1 then -- Exit code 1 is just user cancellation
-				vim.notify("Failed to create Java file (exit code: " .. code .. ")", vim.log.levels.ERROR)
-			end
-		end,
 	})
 end
 
@@ -185,14 +314,6 @@ function M.launch_create_jpa_entity(opts)
 	}, {
 		width = opts.width or 80,
 		height = opts.height or 20,
-		on_success = function()
-			vim.notify("JPA Entity created successfully!", vim.log.levels.INFO)
-		end,
-		on_error = function(code)
-			if code ~= 1 then -- Exit code 1 is just user cancellation
-				vim.notify("Failed to create JPA Entity (exit code: " .. code .. ")", vim.log.levels.ERROR)
-			end
-		end,
 	})
 end
 
@@ -241,14 +362,6 @@ function M.launch_create_entity_field(opts)
 	}, {
 		width = opts.width or 90,
 		height = opts.height or 35,
-		on_success = function()
-			vim.notify("Entity field created successfully!", vim.log.levels.INFO)
-		end,
-		on_error = function(code)
-			if code ~= 1 then
-				vim.notify("Failed to create entity field (exit code: " .. code .. ")", vim.log.levels.ERROR)
-			end
-		end,
 	})
 end
 
@@ -297,14 +410,6 @@ function M.launch_create_entity_relationship(opts)
 	}, {
 		width = opts.width or 100,
 		height = opts.height or 40,
-		on_success = function()
-			vim.notify("Entity relationship created successfully!", vim.log.levels.INFO)
-		end,
-		on_error = function(code)
-			if code ~= 1 then
-				vim.notify("Failed to create entity relationship (exit code: " .. code .. ")", vim.log.levels.ERROR)
-			end
-		end,
 	})
 end
 
