@@ -108,6 +108,13 @@ local function handle_success(response, opts)
 			string.format("Relationship created (%d file%s updated)", files_updated, files_updated ~= 1 and "s" or ""),
 			vim.log.levels.INFO
 		)
+	elseif command == "create-jpa-repository-manual" then
+		-- FileResponse from manual ID creation
+		if data.filePath then
+			reload_buffer(data.filePath)
+			open_file(data.filePath)
+			vim.notify("JPA repository created successfully with manual ID!", vim.log.levels.INFO)
+		end
 	else
 		-- Generic success
 		vim.notify("Operation completed successfully!", vim.log.levels.INFO)
@@ -410,6 +417,54 @@ function M.launch_create_entity_relationship(opts)
 	}, {
 		width = opts.width or 100,
 		height = opts.height or 40,
+	})
+end
+
+---Launch the Create JPA Repository UI for the current entity
+---@param opts table|nil Optional settings
+function M.launch_create_jpa_repository(opts)
+	opts = opts or {}
+
+	-- Get current buffer content
+	local bufnr = vim.api.nvim_get_current_buf()
+	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	local source_code = table.concat(lines, "\n")
+	local file_path = vim.api.nvim_buf_get_name(bufnr)
+
+	-- Check if current file is a JPA entity
+	local is_jpa_entity = false
+	for _, line in ipairs(lines) do
+		if line:match("@Entity") then
+			is_jpa_entity = true
+			break
+		end
+	end
+
+	if not is_jpa_entity then
+		vim.notify("Current file is not a JPA Entity", vim.log.levels.WARN)
+		return
+	end
+
+	-- Check if file is saved
+	if file_path == "" then
+		vim.notify("Please save the file before creating a repository", vim.log.levels.WARN)
+		return
+	end
+
+	-- Base64 encode the source code
+	local b64 = vim.base64.encode(source_code)
+
+	-- Get current working directory
+	local cwd = vim.fn.getcwd()
+
+	-- Launch UI with JpaRepository subcommand - pass entity file data
+	M.launch_ui("jpa-repository", {
+		cwd = cwd,
+		["entity-file-b64-src"] = b64,
+		["entity-file-path"] = file_path,
+	}, {
+		width = opts.width or 90,
+		height = opts.height or 25,
 	})
 end
 

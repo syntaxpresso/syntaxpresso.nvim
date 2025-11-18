@@ -76,6 +76,14 @@ function M.setup(opts)
 							ui_launcher.launch_create_entity_relationship()
 						end,
 					})
+
+					table.insert(actions, {
+						title = "Create JPA Repository",
+						action = function()
+							-- Use Rust UI (TUI with ID type selector)
+							ui_launcher.launch_create_jpa_repository()
+						end,
+					})
 				end
 
 				return actions
@@ -159,6 +167,20 @@ function M.setup(opts)
 		ui_launcher.launch_create_entity_relationship()
 	end, {
 		desc = "Create a new JPA Entity relationship using Rust UI",
+	})
+
+	-- Create user command for creating JPA repositories
+	vim.api.nvim_create_user_command("SyntaxpressoCreateJpaRepository", function()
+		require("syntaxpresso.commands.create_jpa_repository").execute_create_jpa_repository(executable_path)
+	end, {
+		desc = "Create a JPA Repository for the current entity with automatic ID field resolution",
+	})
+
+	-- Create user command for creating JPA repositories with TUI
+	vim.api.nvim_create_user_command("SyntaxpressoCreateJpaRepositoryTui", function()
+		ui_launcher.launch_create_jpa_repository()
+	end, {
+		desc = "Create a JPA Repository for current entity (TUI with ID type selector)",
 	})
 end
 
