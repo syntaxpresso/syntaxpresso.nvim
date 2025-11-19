@@ -185,5 +185,6 @@ These work in both Normal and Insert modes:
 
 ## To do
 - [ ] Edit JPA Entity relationships
+- [ ] Add more types of JPA Entity relationships
 - [ ] Create and edit DTOs
 - [ ] Automatically create migrations based on JPA Entity changes (still have to check if this is possible/viable)
