@@ -182,3 +182,8 @@ These work in both Normal and Insert modes:
 | ---------------- | -------------------------------------------------- |
 | `Ctrl+Enter`     | Submit form immediately (skip to confirm)          |
 | `Ctrl+Backspace` | Go back to previous screen (in multi-step wizards) |
+
+## To do
+- [ ] Edit JPA Entity relationships
+- [ ] Create and edit DTOs
+- [ ] Automatically create migrations based on JPA Entity changes (still have to check if this is possible/viable)
