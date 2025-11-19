@@ -12,13 +12,18 @@ end
 -- Define the path where the binary will be stored, now inside the plugin directory.
 local plugin_path = get_plugin_path()
 local install_dir = plugin_path .. "/bin"
+M.install_dir = install_dir
+
+function M.get_install_dir()
+	return install_dir
+end
 
 -- Returns the expected path to the executable.
 function M.get_executable_path()
-	local executable_name = "syntaxpresso"
+	local executable_name = "syntaxpresso-core"
 	-- Check if running on Windows
 	if vim.fn.has("win32") == 1 then
-		executable_name = "syntaxpresso.exe"
+		executable_name = "syntaxpresso-core.exe"
 	end
 	return install_dir .. "/" .. executable_name
 end
@@ -67,9 +72,6 @@ local function get_latest_release_url(asset_name, callback)
 				end
 			end
 		end,
-		on_stderr = function(_)
-			callback(nil)
-		end,
 		on_exit = function(_, code)
 			if code ~= 0 then
 				callback(nil)
@@ -100,6 +102,9 @@ end
 
 -- The main installation function.
 function M.install(on_complete)
+	-- Make on_complete optional
+	on_complete = on_complete or function() end
+
 	local asset_name = get_platform_asset_name()
 	if not asset_name then
 		vim.notify("Unsupported OS or architecture.", vim.log.levels.ERROR)
@@ -107,13 +112,13 @@ function M.install(on_complete)
 		return
 	end
 	local executable_path = M.get_executable_path()
-	vim.notify("Finding latest release for: " .. asset_name, vim.log.levels.INFO)
 	get_latest_release_url(asset_name, function(url)
 		if not url then
+			vim.notify("Failed to find release URL.", vim.log.levels.ERROR)
 			on_complete(nil)
 			return
 		end
-		vim.notify("Downloading to: " .. executable_path, vim.log.levels.INFO)
+		vim.notify("Downloading syntaxpresso-core to: " .. executable_path, vim.log.levels.INFO)
 		vim.fn.mkdir(install_dir, "p")
 		local download_cmd = {
 			"curl",
