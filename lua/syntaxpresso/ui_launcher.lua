@@ -273,6 +273,21 @@ function M.launch_ui(ui_command, args, opts)
 	-- Enter terminal insert mode
 	vim.cmd("startinsert")
 
+	-- Prevent exiting terminal insert mode (buffer-local only)
+	vim.keymap.set("t", "<C-\\><C-n>", "<Nop>", { buffer = buf, nowait = true })
+	vim.keymap.set("t", "<C-\\><C-o>", "<Nop>", { buffer = buf, nowait = true })
+
+	-- Force insert mode if user somehow gets to normal mode
+	vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+		buffer = buf,
+		callback = function()
+			if vim.api.nvim_get_mode().mode == "n" then
+				vim.cmd("startinsert")
+			end
+		end,
+		desc = "Force terminal insert mode for Syntaxpresso UI",
+	})
+
 	-- Setup Esc key mapping for terminal mode (double Esc to exit)
 	-- Use vim.uv (modern) or vim.loop (legacy) for compatibility
 	local uv = vim.uv or vim.loop
