@@ -324,7 +324,7 @@ function M.launch_create_java_file(opts)
 		cwd = cwd,
 	}, {
 		width = opts.width or 80,
-		height = opts.height or 20,
+		height = opts.height or 23,
 	})
 end
 
