@@ -1,4 +1,3 @@
-local installer = require("syntaxpresso.installer")
 local ui_launcher = require("syntaxpresso.ui_launcher")
 
 local M = {}
@@ -61,29 +60,6 @@ function M.setup(opts)
 	-- Store custom executable path at module level
 	if opts.executable_path then
 		M.custom_executable_path = opts.executable_path
-	end
-
-	local executable_path
-	if opts.executable_path then
-		executable_path = opts.executable_path
-	else
-		executable_path = installer.get_executable_path()
-	end
-
-	-- Check if the executable binary already exists.
-	if
-		vim.fn.isdirectory(installer.get_install_dir()) == 0
-		or not (vim.fn.executable(executable_path) == 1 or vim.fn.filereadable(executable_path))
-	then
-		-- If custom executable_path is not provided and binary doesn't exist
-		-- If it doesn't exist, create a command to prompt the user to install it.
-		installer.install(function(path)
-			if path then
-				vim.notify("Installation successful!", vim.log.levels.INFO)
-			else
-				vim.notify("Installation failed. Please try again or check the logs.", vim.log.levels.ERROR)
-			end
-		end)
 	end
 
 	-- Create main menu command
