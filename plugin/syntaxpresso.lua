@@ -1,4 +1,3 @@
 -- plugin/syntaxpresso.lua
--- This file is intentionally empty to prevent auto-loading.
--- Setup should be called explicitly by the user or plugin manager.
+-- Auto-loads the plugin with default configuration
 require("syntaxpresso").setup({})
