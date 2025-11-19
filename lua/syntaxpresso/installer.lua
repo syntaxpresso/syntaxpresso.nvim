@@ -52,8 +52,8 @@ local function get_platform_asset_name()
 	else
 		return nil -- Unsupported architecture
 	end
-	-- Construct the final asset name, e.g., "syntaxpresso-linux-amd64"
-	return string.format("syntaxpresso-core-%s-%s%s", os, arch, extension)
+	-- Construct the final asset name with UI support, e.g., "syntaxpresso-core-ui-linux-amd64"
+	return string.format("syntaxpresso-core-ui-%s-%s%s", os, arch, extension)
 end
 
 -- Fetches the download URL for the latest release from GitHub.
@@ -112,6 +112,7 @@ function M.install(on_complete)
 		return
 	end
 	local executable_path = M.get_executable_path()
+	vim.notify("Finding latest release for: " .. asset_name, vim.log.levels.INFO)
 	get_latest_release_url(asset_name, function(url)
 		if not url then
 			vim.notify("Failed to find release URL.", vim.log.levels.ERROR)
