@@ -6,8 +6,16 @@ local M = {}
 -- Track if setup has already been called
 local setup_called = false
 
+-- Store custom executable path (accessible by other modules)
+M.custom_executable_path = nil
+
 function M.setup(opts)
 	opts = opts or {}
+
+	-- Store custom executable path at module level
+	if opts.executable_path then
+		M.custom_executable_path = opts.executable_path
+	end
 
 	local get_executable = function()
 		if opts.executable_path then

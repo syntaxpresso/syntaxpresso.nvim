@@ -3,7 +3,13 @@ local M = {}
 ---Get the core executable path (now includes UI functionality with --features ui)
 ---@return string|nil
 local function get_core_executable()
-	-- Try installed location first
+	-- Check if custom executable path was provided in setup
+	local syntaxpresso = require("syntaxpresso")
+	if syntaxpresso.custom_executable_path then
+		return syntaxpresso.custom_executable_path
+	end
+
+	-- Otherwise, try installed location
 	local installer = require("syntaxpresso.installer")
 	local installed_path = installer.get_executable_path()
 
