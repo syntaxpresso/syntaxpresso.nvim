@@ -18,9 +18,9 @@ Syntaxpresso.nvim is a feature-rich Neovim frontend that integrates with [Syntax
 
 ## Features
 
-### Code Actions
+### Interactive Menu
 
-All features are accessible through Neovim's native code actions (`<leader>ca` or `:lua vim.lsp.buf.code_action()`):
+All features are accessible through a dedicated Syntaxpresso menu (default: `<leader>cj` or `:Syntaxpresso`):
 
 #### Entity Management
 
@@ -82,14 +82,14 @@ All features are accessible through Neovim's native code actions (`<leader>ca` o
 ```lua
 {
   "syntaxpresso/syntaxpresso.nvim",
-  dependencies = {
-    'grapp-dev/nui-components.nvim',
-    'MunifTanjim/nui.nvim',
-  },
   config = function()
     require("syntaxpresso").setup({
       -- Optional: specify custom executable path for UI-enabled binary
-      -- executable_path = "/path/to/syntaxpresso-core-ui"
+      -- executable_path = "/path/to/syntaxpresso-core-ui",
+      
+      -- Optional: customize the keymap (default: "<leader>cj")
+      -- Set to false to disable automatic keymap setup
+      -- keymap = "<leader>cj",
     })
   end,
 }
@@ -100,10 +100,6 @@ All features are accessible through Neovim's native code actions (`<leader>ca` o
 ```lua
 use {
   'syntaxpresso/syntaxpresso.nvim',
-  requires = {
-    'grapp-dev/nui-components.nvim',
-    'MunifTanjim/nui.nvim',
-  },
   config = function()
     require("syntaxpresso").setup()
   end
@@ -116,13 +112,6 @@ use {
 # Clone the repository
 git clone https://github.com/syntaxpresso/syntaxpresso.nvim.git \
   ~/.local/share/nvim/site/pack/plugins/start/syntaxpresso.nvim
-
-# Install dependencies
-git clone https://github.com/grapp-dev/nui-components.nvim.git \
-  ~/.local/share/nvim/site/pack/plugins/start/nui-components.nvim
-
-git clone https://github.com/MunifTanjim/nui.nvim.git \
-  ~/.local/share/nvim/site/pack/plugins/start/nui.nvim
 
 # Download and install Syntaxpresso Core UI-enabled binary
 # Choose the appropriate binary for your platform from:
@@ -137,16 +126,29 @@ sudo mv syntaxpresso-core-ui-linux-amd64 /usr/local/bin/syntaxpresso-core
 
 ### Basic Workflow
 
-1. **Open a Java entity file** in Neovim
-2. **Trigger code actions**: Press `<leader>ca` (or your configured keybinding)
-3. **Select an action**: Choose from the available Syntaxpresso actions
+1. **Open a Java file** in Neovim (or navigate to your Java project)
+2. **Open Syntaxpresso menu**: Press `<leader>cj` (or run `:Syntaxpresso`)
+3. **Select an action**: Choose from the available operations
 4. **Follow the wizard**: Complete the interactive UI forms
 5. **Confirm**: Your code is generated automatically
+
+### Menu Options
+
+The menu automatically adapts based on your context:
+
+**Always Available:**
+- Create Java file
+- Create JPA Entity
+
+**When in a JPA Entity file** (file with `@Entity` annotation):
+- Create JPA Entity field
+- Create JPA Entity relationship
+- Create JPA Repository
 
 ### Example: Creating a One-to-One Relationship
 
 1. Open your `User.java` entity
-2. Press `<leader>ca` and select "Create JPA Entity relationship"
+2. Press `<leader>cj` and select "Create JPA Entity relationship"
 3. Select "One-to-One" relationship type
 4. **Tab 1 - Basic Configuration:**
    - Choose mapping type (Bidirectional recommended)
@@ -178,7 +180,7 @@ private User user;
 ### Example: Creating a Many-to-One Relationship
 
 1. Open your `Order.java` entity (the "Many" side)
-2. Press `<leader>ca` and select "Create JPA Entity relationship"
+2. Press `<leader>cj` and select "Create JPA Entity relationship"
 3. Select "Many-to-One" relationship type
 4. **Tab 1 - Basic Configuration (ManyToOne side):**
    - Choose mapping type (Bidirectional recommended)
@@ -210,7 +212,8 @@ private List<Order> orders;
 ### Example: Creating an ID Field
 
 1. Open your entity file
-2. Press `<leader>ca` and select "Create JPA Entity id field"
+2. Press `<leader>cj` and select "Create JPA Entity field"
+3. Select "ID field" from the field type menu
 3. **Configure your ID:**
    - Field name: `id`
    - Field type: `Long`
@@ -249,21 +252,45 @@ require("syntaxpresso").setup({
   -- If not specified, searches in PATH for 'syntaxpresso-core'
   executable_path = nil,
 
-  -- Default timeout for commands (in milliseconds)
-  default_timeout = 30000,
+  -- Keymap to open Syntaxpresso menu
+  -- Set to false to disable automatic keymap setup
+  -- Default: "<leader>cj"
+  keymap = "<leader>cj",
 })
 ```
+
+### Available Commands
+
+- `:Syntaxpresso` - Open the Syntaxpresso menu
+- `:SyntaxpressoCreateJavaFile` - Create a new Java file
+- `:SyntaxpressoCreateJpaEntity` - Create a new JPA Entity
+- `:SyntaxpressoCreateEntityField` - Create a JPA Entity field
+- `:SyntaxpressoCreateEntityRelationship` - Create a JPA Entity relationship
+- `:SyntaxpressoCreateJpaRepository` - Create a JPA Repository
+- `:SyntaxpressoInstall` - Install/update Syntaxpresso Core binary
+- `:SyntaxpressoUpdate` - Check for and install updates
 
 ### Custom Keybindings
 
 ```lua
--- Optional: Add custom keybindings
-vim.keymap.set("n", "<leader>je", "<cmd>lua require('syntaxpresso').create_entity()<CR>",
+-- Custom keymap for the menu
+require("syntaxpresso").setup({
+  keymap = "<leader>sj",  -- or any other key combination
+})
+
+-- Disable automatic keymap and set your own
+require("syntaxpresso").setup({
+  keymap = false,
+})
+vim.keymap.set("n", "<leader>j", function()
+  require("syntaxpresso").show_menu()
+end, { desc = "Syntaxpresso menu" })
+
+-- Or create direct shortcuts to specific commands
+vim.keymap.set("n", "<leader>je", "<cmd>SyntaxpressoCreateJpaEntity<CR>",
   { desc = "Create JPA Entity" })
-vim.keymap.set("n", "<leader>jf", "<cmd>lua require('syntaxpresso').create_field()<CR>",
+vim.keymap.set("n", "<leader>jf", "<cmd>SyntaxpressoCreateEntityField<CR>",
   { desc = "Create JPA Field" })
-vim.keymap.set("n", "<leader>jr", "<cmd>lua require('syntaxpresso').create_relationship()<CR>",
-  { desc = "Create JPA Relationship" })
 ```
 
 ## Architecture
@@ -272,20 +299,21 @@ vim.keymap.set("n", "<leader>jr", "<cmd>lua require('syntaxpresso').create_relat
 
 Syntaxpresso.nvim uses the **Rust core's built-in TUI** for all interactive forms:
 
-1. **User Action**: User triggers a code action in Neovim
-2. **UI Launcher**: Plugin spawns `syntaxpresso-core ui <command>` in a floating terminal
-3. **Interactive TUI**: Rust-based terminal UI (ratatui) collects configuration
-4. **Direct Execution**: Core processes request and generates/modifies code directly
-5. **Exit**: TUI exits, plugin reloads buffer to show changes
+1. **User Action**: User opens Syntaxpresso menu (`<leader>cj` or `:Syntaxpresso`)
+2. **Menu Selection**: User selects an operation from `vim.ui.select` menu
+3. **UI Launcher**: Plugin spawns `syntaxpresso-core ui <command>` in a floating terminal
+4. **Interactive TUI**: Rust-based terminal UI (ratatui) collects configuration
+5. **Direct Execution**: Core processes request and generates/modifies code directly
+6. **Exit**: TUI exits, plugin reloads buffer to show changes
 
 ```
 ┌─────────────┐          ┌──────────────┐          ┌─────────────────────┐
 │   Neovim    │          │ UI Launcher  │          │ Syntaxpresso Core   │
-│ Code Action │──────────│  (Lua/vim)   │──────────│ (Rust Binary)       │
-│  (Lua/nui)  │  Trigger │              │   Spawn  │                     │
+│  Menu (<leader>cj)     │  (Lua/vim)   │──────────│ (Rust Binary)       │
+│  (vim.ui.select)       │              │   Spawn  │                     │
 └─────────────┘          └──────────────┘          └─────────────────────┘
       │                         │                         │
-      │  Trigger Action         │                         │
+      │  Select Action          │                         │
       │  ───────────►           │                         │
       │                         │  termopen()             │
       │                         │  `core ui <cmd>`        │
@@ -333,10 +361,6 @@ cd syntaxpresso.nvim
 {
   "syntaxpresso/syntaxpresso.nvim",
   dir = "/path/to/syntaxpresso.nvim",
-  dependencies = {
-    'grapp-dev/nui-components.nvim',
-    'MunifTanjim/nui.nvim',
-  },
   config = function()
     require("syntaxpresso").setup({
       -- Point to your UI-enabled dev build
@@ -387,13 +411,17 @@ end
 
 ### Common Issues
 
+**Issue**: Menu not appearing or keymap not working
+
+- **Solution**: Check that the keymap is not conflicting with other plugins. Try `:verbose nmap <leader>cj` to see what's bound to that key. You can customize the keymap in setup or use `:Syntaxpresso` command directly.
+
 **Issue**: "syntaxpresso-core not found" or "ui command not found"
 
 - **Solution**: Install the **UI-enabled** Syntaxpresso Core binary (`syntaxpresso-core-ui-*`) and ensure it's in PATH or set `executable_path` in setup. The CLI-only binary does not include UI commands.
 
-**Issue**: Code actions not appearing
+**Issue**: Menu options not showing entity-specific actions
 
-- **Solution**: Ensure you're in a Java file within a valid Java project
+- **Solution**: Ensure you're in a file that contains the `@Entity` annotation. The menu is context-aware and only shows entity-specific options when appropriate.
 
 **Issue**: Timeout errors
 
@@ -447,6 +475,5 @@ See [Releases](https://github.com/syntaxpresso/syntaxpresso.nvim/releases) for v
 
 ## Acknowledgments
 
-- Built with [nui-components.nvim](https://github.com/grapp-dev/nui-components.nvim)
 - Powered by [Syntaxpresso Core](https://github.com/syntaxpresso/core)
 - Inspired by the Neovim community's dedication to efficient development workflows
