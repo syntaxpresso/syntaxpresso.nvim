@@ -299,7 +299,7 @@ function M.launch_create_java_file(opts)
 	local cwd = vim.fn.getcwd()
 
 	-- Launch UI with JavaFile subcommand, passing cwd
-	M.launch_ui("java-file", {
+	M.launch_ui("create-java-file", {
 		cwd = cwd,
 	}, {
 		width = opts.width or 80,
@@ -316,7 +316,7 @@ function M.launch_create_jpa_entity(opts)
 	local cwd = vim.fn.getcwd()
 
 	-- Launch UI with JpaEntity subcommand, passing cwd
-	M.launch_ui("jpa-entity", {
+	M.launch_ui("create-jpa-entity", {
 		cwd = cwd,
 	}, {
 		width = opts.width or 80,
@@ -362,7 +362,7 @@ function M.launch_create_entity_field(opts)
 	local cwd = vim.fn.getcwd()
 
 	-- Launch UI with EntityField subcommand, passing all required arguments
-	M.launch_ui("entity-field", {
+	M.launch_ui("create-jpa-entity-basic-field", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
@@ -410,7 +410,7 @@ function M.launch_create_entity_relationship(opts)
 	local cwd = vim.fn.getcwd()
 
 	-- Launch UI with EntityRelationship subcommand, passing all required arguments
-	M.launch_ui("entity-relationship", {
+	M.launch_ui("create-jpa-one-to-one-relationship", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
@@ -458,7 +458,7 @@ function M.launch_create_jpa_repository(opts)
 	local cwd = vim.fn.getcwd()
 
 	-- Launch UI with JpaRepository subcommand - pass entity file data
-	M.launch_ui("jpa-repository", {
+	M.launch_ui("create-jpa-repository", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
