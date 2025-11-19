@@ -9,6 +9,55 @@ local setup_called = false
 -- Store custom executable path (accessible by other modules)
 M.custom_executable_path = nil
 
+--- Show a menu of available Syntaxpresso operations
+function M.show_menu()
+	-- Check if current file is a JPA entity
+	local bufnr = vim.api.nvim_get_current_buf()
+	local is_jpa_entity = false
+	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+	for _, line in ipairs(lines) do
+		if line:match("@Entity") then
+			is_jpa_entity = true
+			break
+		end
+	end
+
+	-- Build menu options
+	local options = {
+		"Create Java file",
+		"Create JPA Entity",
+	}
+
+	-- Add entity-specific options if in an entity file
+	if is_jpa_entity then
+		table.insert(options, "Create JPA Entity field")
+		table.insert(options, "Create JPA Entity relationship")
+		table.insert(options, "Create JPA Repository")
+	end
+
+	-- Show selection menu
+	vim.ui.select(options, {
+		prompt = "Syntaxpresso:",
+	}, function(choice)
+		if not choice then
+			return
+		end
+
+		-- Execute the selected action
+		if choice == "Create Java file" then
+			ui_launcher.launch_create_java_file()
+		elseif choice == "Create JPA Entity" then
+			ui_launcher.launch_create_jpa_entity()
+		elseif choice == "Create JPA Entity field" then
+			ui_launcher.launch_create_entity_field()
+		elseif choice == "Create JPA Entity relationship" then
+			ui_launcher.launch_create_entity_relationship()
+		elseif choice == "Create JPA Repository" then
+			ui_launcher.launch_create_jpa_repository()
+		end
+	end)
+end
+
 function M.setup(opts)
 	opts = opts or {}
 
@@ -24,80 +73,6 @@ function M.setup(opts)
 			return installer.get_executable_path()
 		end
 	end
-
-	require("null-ls").register({
-		name = "syntaxpresso-actions",
-		method = { require("null-ls").methods.CODE_ACTION },
-		filetypes = { "java" },
-		generator = {
-			fn = function(params)
-				local executable = get_executable()
-				if vim.fn.filereadable(executable) ~= 1 then
-					return {}
-				end
-
-				local actions = {
-					{
-						title = "Create Java file",
-						action = function()
-							-- Use Rust UI
-							ui_launcher.launch_create_java_file()
-						end,
-					},
-					{
-						title = "Create JPA Entity",
-						action = function()
-							-- Use Rust UI
-							ui_launcher.launch_create_jpa_entity()
-						end,
-					},
-				}
-
-				-- Check if current file is a JPA entity
-				-- We need to do this synchronously to decide which actions to show
-				local bufnr = params.bufnr or vim.api.nvim_get_current_buf()
-				local is_jpa_entity = false
-
-				-- Quick check: if buffer has @Entity annotation, it's likely a JPA entity
-				local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-				for _, line in ipairs(lines) do
-					if line:match("@Entity") then
-						is_jpa_entity = true
-						break
-					end
-				end
-
-				-- Only add field and relationship actions if it's a JPA entity
-				if is_jpa_entity then
-					table.insert(actions, {
-						title = "Create JPA Entity field",
-						action = function()
-							-- Use Rust UI
-							ui_launcher.launch_create_entity_field()
-						end,
-					})
-
-					table.insert(actions, {
-						title = "Create JPA Entity relationship",
-						action = function()
-							-- Use Rust UI
-							ui_launcher.launch_create_entity_relationship()
-						end,
-					})
-
-					table.insert(actions, {
-						title = "Create JPA Repository",
-						action = function()
-							-- Use Rust UI (TUI with ID type selector)
-							ui_launcher.launch_create_jpa_repository()
-						end,
-					})
-				end
-
-				return actions
-			end,
-		},
-	})
 
 	if setup_called and not opts.executable_path then
 		vim.notify("Setup already called, skipping", vim.log.levels.WARN)
@@ -123,7 +98,7 @@ function M.setup(opts)
 			-- The installer function is called with a callback.
 			installer.install(function(path)
 				if path then
-					vim.notify("Installation successful! Restart Neovim to load code actions.", vim.log.levels.INFO)
+					vim.notify("Installation successful! Restart Neovim to use Syntaxpresso.", vim.log.levels.INFO)
 					-- Remove the installation command as it's no longer needed for this session.
 					pcall(vim.api.nvim_del_user_command, "SyntaxpressoInstall")
 				end
@@ -147,6 +122,13 @@ function M.setup(opts)
 		end)
 	end, {
 		desc = "Checks for and installs updates to the syntaxpresso core binary.",
+	})
+
+	-- Create main menu command
+	vim.api.nvim_create_user_command("Syntaxpresso", function()
+		M.show_menu()
+	end, {
+		desc = "Show Syntaxpresso menu",
 	})
 
 	-- Create user command for creating Java files using Rust UI
@@ -190,6 +172,14 @@ function M.setup(opts)
 	end, {
 		desc = "Create a JPA Repository for current entity (TUI with ID type selector)",
 	})
+
+	-- Set up keybinding if specified
+	if opts.keymap ~= false then
+		local keymap = opts.keymap or "<leader>cj"
+		vim.keymap.set("n", keymap, function()
+			M.show_menu()
+		end, { desc = "Show Syntaxpresso menu", noremap = true, silent = true })
+	end
 end
 
 return M
