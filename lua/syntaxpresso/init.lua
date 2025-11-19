@@ -66,14 +66,6 @@ function M.setup(opts)
 		M.custom_executable_path = opts.executable_path
 	end
 
-	local get_executable = function()
-		if opts.executable_path then
-			return opts.executable_path
-		else
-			return installer.get_executable_path()
-		end
-	end
-
 	if setup_called and not opts.executable_path then
 		vim.notify("Setup already called, skipping", vim.log.levels.WARN)
 		return
@@ -161,16 +153,9 @@ function M.setup(opts)
 
 	-- Create user command for creating JPA repositories
 	vim.api.nvim_create_user_command("SyntaxpressoCreateJpaRepository", function()
-		require("syntaxpresso.commands.create_jpa_repository").execute_create_jpa_repository(executable_path)
-	end, {
-		desc = "Create a JPA Repository for the current entity with automatic ID field resolution",
-	})
-
-	-- Create user command for creating JPA repositories with TUI
-	vim.api.nvim_create_user_command("SyntaxpressoCreateJpaRepositoryTui", function()
 		ui_launcher.launch_create_jpa_repository()
 	end, {
-		desc = "Create a JPA Repository for current entity (TUI with ID type selector)",
+		desc = "Create a JPA Repository for current entity",
 	})
 
 	-- Set up keybinding if specified
