@@ -18,7 +18,6 @@ Syntaxpresso.nvim serves as a feature-rich Neovim frontend wrapper for [Syntaxpr
 ### Prerequisites
 
 - **Neovim 0.9.0+**
-- **Syntaxpresso Core**: The plugin requires the UI-enabled binary of `syntaxpresso-core`. You can install it manually or let the plugin handle it via the `:SyntaxpressoInstall` command.
 - **Java Project**: A project with JPA entities.
 
 ### Plugin Manager Installation
