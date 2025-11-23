@@ -165,8 +165,8 @@ function M.launch_ui(ui_command, args, opts)
 	end
 
 	-- Build command arguments as a table (list) for proper argument passing
-	-- Now using: syntaxpresso-core ui <subcommand> <args>
-	local cmd_parts = { core_path, "ui" }
+	-- Now using: syntaxpresso-core java <subcommand> <args>
+	local cmd_parts = { core_path, "java" }
 
 	-- Add subcommand if provided
 	if ui_command and ui_command ~= "" then
@@ -319,8 +319,8 @@ function M.launch_create_java_file(opts)
 	-- Get current working directory
 	local cwd = vim.fn.getcwd()
 
-	-- Launch UI with JavaFile subcommand, passing cwd
-	M.launch_ui("create-java-file", {
+	-- Launch UI with JavaFile subcommand (now with -ui suffix)
+	M.launch_ui("create-java-file-ui", {
 		cwd = cwd,
 	}, {
 		width = opts.width or 80,
@@ -336,8 +336,8 @@ function M.launch_create_jpa_entity(opts)
 	-- Get current working directory
 	local cwd = vim.fn.getcwd()
 
-	-- Launch UI with JpaEntity subcommand, passing cwd
-	M.launch_ui("create-jpa-entity", {
+	-- Launch UI with JpaEntity subcommand (now with -ui suffix)
+	M.launch_ui("create-jpa-entity-ui", {
 		cwd = cwd,
 	}, {
 		width = opts.width or 80,
@@ -382,8 +382,8 @@ function M.launch_create_entity_field(opts)
 	-- Get current working directory
 	local cwd = vim.fn.getcwd()
 
-	-- Launch UI with EntityField subcommand, passing all required arguments
-	M.launch_ui("create-jpa-entity-basic-field", {
+	-- Launch UI with EntityField subcommand (now with -ui suffix)
+	M.launch_ui("create-jpa-entity-basic-field-ui", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
@@ -430,8 +430,8 @@ function M.launch_create_entity_relationship(opts)
 	-- Get current working directory
 	local cwd = vim.fn.getcwd()
 
-	-- Launch UI with EntityRelationship subcommand, passing all required arguments
-	M.launch_ui("create-jpa-one-to-one-relationship", {
+	-- Launch UI with EntityRelationship subcommand (now with -ui suffix)
+	M.launch_ui("create-jpa-one-to-one-relationship-ui", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
@@ -478,8 +478,8 @@ function M.launch_create_jpa_repository(opts)
 	-- Get current working directory
 	local cwd = vim.fn.getcwd()
 
-	-- Launch UI with JpaRepository subcommand - pass entity file data
-	M.launch_ui("create-jpa-repository", {
+	-- Launch UI with JpaRepository subcommand (now with -ui suffix)
+	M.launch_ui("create-jpa-repository-ui", {
 		cwd = cwd,
 		["entity-file-b64-src"] = b64,
 		["entity-file-path"] = file_path,
