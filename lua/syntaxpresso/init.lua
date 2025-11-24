@@ -104,6 +104,24 @@ function M.setup(opts)
 		desc = "Create a JPA Repository for current entity",
 	})
 
+	-- Create user command for updating core binary
+	vim.api.nvim_create_user_command("SyntaxpressoUpdateCore", function()
+		local installer = require("syntaxpresso.installer")
+		vim.notify("Syntaxpresso: Updating core binary...", vim.log.levels.INFO)
+		installer.install(function(path)
+			if path then
+				vim.notify("Syntaxpresso core binary updated successfully to: " .. path, vim.log.levels.INFO)
+			else
+				vim.notify(
+					"Syntaxpresso core binary update failed. Please check your internet connection or install manually.",
+					vim.log.levels.ERROR
+				)
+			end
+		end)
+	end, {
+		desc = "Update Syntaxpresso core binary to latest version",
+	})
+
 	-- Set up keybinding if specified
 	if opts.keymap ~= false then
 		local keymap = opts.keymap or "<leader>cj"
