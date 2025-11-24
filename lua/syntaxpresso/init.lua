@@ -57,6 +57,13 @@ end
 function M.setup(opts)
 	opts = opts or {}
 
+	-- Default auto-update settings (enabled by default, silent install)
+	opts.auto_update = vim.tbl_deep_extend("force", {
+		enabled = true, -- Auto-update ON by default
+		frequency = "always", -- Check on every Neovim start
+		prompt = false, -- Silent install (no prompts)
+	}, opts.auto_update or {})
+
 	-- Store custom executable path at module level
 	if opts.executable_path then
 		M.custom_executable_path = opts.executable_path
@@ -104,19 +111,30 @@ function M.setup(opts)
 		desc = "Create a JPA Repository for current entity",
 	})
 
-	-- Create user command for updating core binary
+	-- Enhanced user command for updating core binary
 	vim.api.nvim_create_user_command("SyntaxpressoUpdateCore", function()
 		local installer = require("syntaxpresso.installer")
-		vim.notify("Syntaxpresso: Updating core binary...", vim.log.levels.INFO)
-		installer.install(function(path)
-			if path then
-				vim.notify("Syntaxpresso core binary updated successfully to: " .. path, vim.log.levels.INFO)
-			else
-				vim.notify(
-					"Syntaxpresso core binary update failed. Please check your internet connection or install manually.",
-					vim.log.levels.ERROR
-				)
-			end
+		local version_checker = require("syntaxpresso.version_checker")
+
+		vim.notify("Checking for updates...", vim.log.levels.INFO)
+
+		version_checker.get_local_version(function(local_version)
+			installer.install(function(path)
+				if path then
+					version_checker.get_local_version(function(new_version)
+						if new_version and new_version ~= local_version then
+							vim.notify(
+								string.format("✓ Updated: v%s → v%s", local_version or "none", new_version),
+								vim.log.levels.INFO
+							)
+						else
+							vim.notify("✓ Already up to date", vim.log.levels.INFO)
+						end
+					end)
+				else
+					vim.notify("✗ Update failed", vim.log.levels.ERROR)
+				end
+			end)
 		end)
 	end, {
 		desc = "Update Syntaxpresso core binary to latest version",
@@ -129,6 +147,12 @@ function M.setup(opts)
 			M.show_menu()
 		end, { desc = "Show Syntaxpresso menu", noremap = true, silent = true })
 	end
+
+	-- Check for updates on startup (deferred to not block)
+	local version_checker = require("syntaxpresso.version_checker")
+	vim.defer_fn(function()
+		version_checker.check_and_prompt_update(opts)
+	end, 1000) -- Wait 1 second after startup
 end
 
 return M
