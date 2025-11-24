@@ -34,6 +34,53 @@ Syntaxpresso.nvim serves as a feature-rich Neovim frontend wrapper for [Syntaxpr
 use { 'syntaxpresso/syntaxpresso.nvim' }
 ```
 
+## Configuration
+
+### Basic Setup
+
+```lua
+require("syntaxpresso").setup({
+  -- Optional: Custom executable path (if not using auto-install)
+  executable_path = "/path/to/syntaxpresso-core",
+  
+  -- Optional: Custom keybinding (default: <leader>cj)
+  keymap = "<leader>cj",
+})
+```
+
+### Auto-Update
+
+The plugin automatically updates the core binary on startup. Updates install silently with a notification like: `✓ Syntaxpresso core updated: v0.6.2 → v0.6.3`
+
+**Manual update:**
+```vim
+:SyntaxpressoUpdateCore
+```
+
+**Customize behavior:**
+```lua
+require("syntaxpresso").setup({
+  auto_update = {
+    enabled = true,        -- Enable auto-updates (default: true)
+    frequency = "always",  -- "always" | "daily" | "weekly" | "never" (default: "always")
+    prompt = false,        -- Ask before updating (default: false)
+  }
+})
+```
+
+**Common configurations:**
+```lua
+-- Ask before updating
+require("syntaxpresso").setup({
+  auto_update = { prompt = true }
+})
+
+-- Disable auto-updates
+require("syntaxpresso").setup({
+  auto_update = { enabled = false }
+})
+```
+
 ## Keybindings
 
 The plugin sets up `<leader>cj` by default to open the Syntaxpresso menu. You can also bind specific commands directly:
