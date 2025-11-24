@@ -11,7 +11,7 @@
 
 A powerful Neovim plugin for Java development that provides intelligent code generation and manipulation for JPA (Java Persistence API) entities.
 
-Syntaxpresso.nvim serves as a feature-rich Neovim frontend wrapper for [Syntaxpresso Core](https://github.com/syntaxpresso/core). It leverages the core's Rust-based AST manipulation engine and interactive Terminal UI (TUI) to deliver advanced Java code generation capabilities—such as creating entities, managing relationships, and generating repositories—directly within your editor workflow.
+Syntaxpresso.nvim serves as a feature-rich Neovim frontend wrapper for [Syntaxpresso Core](https://github.com/syntaxpresso/core). It leverages the core's Tree-Sitter based AST manipulation engine and interactive Terminal UI (TUI) to deliver advanced Java code generation capabilities—such as creating entities, managing relationships, and generating repositories—directly within your editor workflow.
 
 ## Installation
 
